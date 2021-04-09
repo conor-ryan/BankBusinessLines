@@ -44,7 +44,7 @@ bhck = [
         '1410','1292','1296','1590','1763','2081','J454','1545','J451','KX57','F162','F163','KX58','2122',
                         ###    Schedule HC-V    ###
         'J981','JF84','HU20','HU21','HU22','HU23','K009','JF89','JF91','JF90','JF92','JF85','JF93','JF86','K030','JF87','K033','JF88','JF77','JF78',
-        
+
         # pre-2001 variables
         '0278','0279','3210','2800','0276','0277','2332','2333','1350','4010','A517','A518','B490','3000', '3163','0426'
         ]
@@ -103,28 +103,28 @@ for i in range(len(rssd)):
 
 for i in range(len(bhck)):
     BHCK_items.append( 'BHCK'+str(bhck[i]) )
-    
+
 for i in range(len(bhcb)):
     BHCK_items.append( 'BHCB'+str(bhcb[i]) )
-    
+
 for i in range(len(bhod)):
     BHCK_items.append( 'BHOD'+str(bhod[i]) )
-    
+
 for i in range(len(bhct)):
-    BHCK_items.append( 'BHCT'+str(bhct[i]) ) 
-    
+    BHCK_items.append( 'BHCT'+str(bhct[i]) )
+
 for i in range(len(bhfn)):
-    BHCK_items.append( 'BHFN'+str(bhfn[i]) )  
-    
+    BHCK_items.append( 'BHFN'+str(bhfn[i]) )
+
 for i in range(len(bhdm)):
     BHCK_items.append( 'BHDM'+str(bhdm[i]) )
-    
+
 for i in range(len(bhca)):
     BHCK_items.append( 'BHCA'+str(bhca[i]) )
-    
+
 for i in range(len(bhcw)):
-    BHCK_items.append( 'BHCW'+str(bhcw[i]) )  
-    
+    BHCK_items.append( 'BHCW'+str(bhcw[i]) )
+
 # one long list
 ItemList = np.concatenate(( RSSD_items,BHCK_items,BHCB_items,BHOD_items,BHCT_items,
                             BHFN_items,BHDM_items,BHCA_items,BHCW_items ))
@@ -141,50 +141,50 @@ GenDF = pd.DataFrame()
 iterator = 1
 #merge all data files in folder
 for file in os.listdir(directory):
-    
+
     print('Iteration',iterator,' out of', len(os.listdir(directory)) )
     iterator = iterator + 1
-    
+
     #initialize temporary dataframe
-    newDF = pd.DataFrame() 
+    newDF = pd.DataFrame()
 
     filename = os.fsdecode(file)
-    
+
     if 'bhcf' == filename[:4]:
-        
+
         try:
-            temp = pd.read_csv('/home/pando004/Desktop/BankData/FRY9/'+filename,delimiter='^',skiprows=[1],dtype=object,error_bad_lines=False,na_values='--------')            
+            temp = pd.read_csv('/home/pando004/Desktop/BankData/FRY9/'+filename,delimiter='^',skiprows=[1],dtype=object,error_bad_lines=False,na_values='--------')
         except UnicodeDecodeError:
             temp = pd.read_csv('/home/pando004/Desktop/BankData/FRY9/'+filename,delimiter='^',skiprows=[1],dtype=object,error_bad_lines=False,na_values='--------',encoding = 'unicode_escape')
-            
+
         try:
             temp = temp.set_index('RSSD9001')
         except KeyError:
             temp['RSSD9001'] = temp['rssd9001']
             temp['RSSD9999'] = temp['rssd9999']
             temp = temp.set_index('RSSD9001')
-            
+
         #find titles that match list items
         matches = list( set(list(temp)) & set(ItemList))
-                
+
         #extract reduced dataset
         temp_red = temp[ matches ]
         #merge to larger one
         newDF = pd.concat( [newDF,temp_red], axis=1)
-            
-        #Drop duplicate variables    
+
+        #Drop duplicate variables
         newDF = newDF.loc[:,~newDF.columns.duplicated() ]
-        
+
         #Titles that were not found in call report file
         missing = list( set(ItemList) - set(list(newDF)) )
-        
+
         for i in range(len(missing)):
             newDF['%s'%missing[i]] = np.nan
-        
-        
+
+
         #GenDF merge
         GenDF = pd.concat( [GenDF,newDF], axis = 0 )
-              
+
 # convert variables to numeric format
 GenDF[ BHCK_items ] = GenDF[ BHCK_items ].apply( pd.to_numeric )
 GenDF[ BHCB_items ] = GenDF[ BHCB_items ].apply( pd.to_numeric )
@@ -194,6 +194,8 @@ GenDF[ BHFN_items ] = GenDF[ BHFN_items ].apply( pd.to_numeric )
 GenDF[ BHDM_items ] = GenDF[ BHDM_items ].apply( pd.to_numeric )
 GenDF[ BHCA_items ] = GenDF[ BHCA_items ].apply( pd.to_numeric )
 GenDF[ BHCW_items ] = GenDF[ BHCW_items ].apply( pd.to_numeric )
-    
+
 GenDF.to_csv('/home/pando004/Desktop/BankData/FRY9/frdata.csv')
 
+
+# This is git test line.
