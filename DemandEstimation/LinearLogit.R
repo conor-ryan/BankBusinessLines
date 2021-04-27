@@ -36,5 +36,6 @@ big[,deposit_loan_ratio:=(consumer_loans+commercial_loans)/total_deposits]
 
 big[,summary(lm(consumer_rate~deposit_rate + date))]
 
+# Checking Linux Server Git Connection
 
 ggplot(big[date=="2008-09-30"]) + aes(x=deposit_rate,y=consumer_rate) + geom_point() + geom_smooth(method="lm")
