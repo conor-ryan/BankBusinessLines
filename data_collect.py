@@ -31,6 +31,8 @@ bhck = [
         '4070','4483','A220','C886','C888','C887','C386','C387','KX46','KX47','B491','B492','B493','8560','8561','B496','B497','4079','3521','3196',
         # noninterest expense
         '4135','4217','C216','C232','4092','4093','HT69','HT70','4301','4302','4300','FT28','G104','G103','4340','4484',
+        #Salaries, Premises, Goodwill, Amortization, other, total, trading loss, trading loss, income loss, taxes, income loss, disc. operations, income loss, income loss, income loss, minority interest
+
         # other noninterest items
         'C013','C014','C016','4042','C015','F555','T047','C017','0497','4136','C018','8403','4141','4146','F556','F557','F558','F559','Y923','Y924','3200',
         # changes in equity capital

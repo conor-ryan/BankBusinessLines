@@ -105,6 +105,14 @@ Loan Price/Return
                                           (BHCKC892 + BHCKC894 + BHCK3585 + BHCK3589 + BHCKC896 + BHCKC898 + BHCK4665 + BHCK4617 + BHCKB515 + BHCKK133 + BHCKK206 + BHCK4628 + BHCKF187 + BHCKF188 + BHCKKX51)
 
     - Then, return on lending is ( interest return - NCO )/lending
+
+    Cost Variables
+    - Salaries: BHCK4135
+    - Premises: BHCK4217
+    - Other: BHCK4092
+    - Total: BHCK4093
+
+    Measuring bank size to normalize costs, using Total Assets BHCK2170
 """
 # replace nan entries in data with zero value
 
@@ -114,7 +122,9 @@ df[['BHCK4174','BHCK6760','BHCK4176','BHCK6761','BHCKA517','BHCKA518','BHCKHK03'
     'BHCKC217','BHCKC218','BHCKC891','BHCKC893','BHCK3584','BHCK3588','BHCKC895','BHCKC897','BHCK4655','BHCK4645',
     'BHCKB514','BHCKK129','BHCKK205','BHCK4644','BHCKF158','BHCKC880','BHCKKX50','BHCKC892','BHCKC894','BHCK3585',
     'BHCK3589','BHCKC896','BHCKC898','BHCK4665','BHCK4617','BHCKB515','BHCKK133','BHCKK206','BHCK4628','BHCKF187',
-    'BHCKF188','BHCKKX51']] = (
+    'BHCKF188','BHCKKX51',
+    'BHCK4135','BHCK4217','BHCK4092','BHCK4093',
+    'BHCK2170']] = (
 
         df[['BHCK4174','BHCK6760','BHCK4176','BHCK6761','BHCKA517','BHCKA518','BHCKHK03','BHCKHK04','BHDM1797','BHDM5367',
             'BHDM5368','BHCKF158','BHCKF159','BHDM1420','BHDM1975','BHDM1460','BHCKF160','BHCKF161','BHCK1292','BHCK1296',
@@ -122,8 +132,26 @@ df[['BHCK4174','BHCK6760','BHCK4176','BHCK6761','BHCKA517','BHCKA518','BHCKHK03'
             'BHCKC217','BHCKC218','BHCKC891','BHCKC893','BHCK3584','BHCK3588','BHCKC895','BHCKC897','BHCK4655','BHCK4645',
             'BHCKB514','BHCKK129','BHCKK205','BHCK4644','BHCKF158','BHCKC880','BHCKKX50','BHCKC892','BHCKC894','BHCK3585',
             'BHCK3589','BHCKC896','BHCKC898','BHCK4665','BHCK4617','BHCKB515','BHCKK133','BHCKK206','BHCK4628','BHCKF187',
-            'BHCKF188','BHCKKX51']].fillna(0) )
+            'BHCKF188','BHCKKX51',
+            'BHCK4135','BHCK4217','BHCK4092','BHCK4093',
+            'BHCK2170']].fillna(0) )
 
+
+#### Limit to only banks of a certain size ####
+
+top10_idx = df[df.date == df.date.unique()[120]]['BHCK2170'].nlargest(20).index
+for i in range(len(top10_idx)):
+    idx =  df[df.index == top10_idx[i] ]['RSSD9001'].unique()[0]
+    if i ==0:
+        temp_df = df[df.RSSD9001 == idx]
+    else:
+        temp_df = temp_df.append( df[df.RSSD9001 == idx] )
+
+# re-write the dataframe with the smaller subset of banks
+df = temp_df.copy()
+
+
+### Quantity Series ###
 
 # create deposit quantity series
 df['total_deposits'] = df['BHDM6631'] + df['BHDM6636']
@@ -136,6 +164,7 @@ df['commercial_loans'] = (df['BHCKF158'] + df['BHCKF159'] + df['BHDM1420'] + df[
                           df['BHCKF161'] + df['BHCK1292'] + df['BHCK1296'] + df['BHCK1590'] + df['BHDM1766'] + df['BHDMJ454'] +
                           df['BHDM1545']  + df['BHDM2165'] + df['BHDMKX57'] )
 
+### Income (Revenue?) Series ###
 
 # create deposit, consumer loan and commercial loan income/expense series
 df['deposit_expense']     = np.nan
@@ -155,17 +184,15 @@ df['commercial_loan_nco'] = ( ( df['BHCKC891'] + df['BHCKC893'] + df['BHCK3584']
                                 df['BHCK4665'] + df['BHCK4617'] + df['BHCKB515'] + df['BHCKK133'] + df['BHCKK206'] + df['BHCK4628'] +
                                 df['BHCKF187'] + df['BHCKF188'] + df['BHCKKX51'] ) )
 
+### Cost Series ###
+df['salaries'] = df['BHCK4315']
+df['premises_cost'] = df['BHCK4217']
+df['other_cost'] = df['BHCK4092']
+df['total_cost'] = df['BHCK4093']
 
-top10_idx = df[df.date == df.date.unique()[120]]['BHCK2170'].nlargest(20).index
-for i in range(len(top10_idx)):
-    idx =  df[df.index == top10_idx[i] ]['RSSD9001'].unique()[0]
-    if i ==0:
-        temp_df = df[df.RSSD9001 == idx]
-    else:
-        temp_df = temp_df.append( df[df.RSSD9001 == idx] )
+### Bank Size ###
+df['total_assets'] = df['BHCK2170']
 
-# re-write the dataframe with the smaller subset of banks
-df = temp_df.copy()
 
 for idx, bank in enumerate( df.RSSD9001.unique() ):
 
