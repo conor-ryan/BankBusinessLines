@@ -137,19 +137,6 @@ df[['BHCK4174','BHCK6760','BHCK4176','BHCK6761','BHCKA517','BHCKA518','BHCKHK03'
             'BHCK2170']].fillna(0) )
 
 
-#### Limit to only banks of a certain size ####
-
-top10_idx = df[df.date == df.date.unique()[120]]['BHCK2170'].nlargest(20).index
-for i in range(len(top10_idx)):
-    idx =  df[df.index == top10_idx[i] ]['RSSD9001'].unique()[0]
-    if i ==0:
-        temp_df = df[df.RSSD9001 == idx]
-    else:
-        temp_df = temp_df.append( df[df.RSSD9001 == idx] )
-
-# re-write the dataframe with the smaller subset of banks
-df = temp_df.copy()
-
 
 ### Quantity Series ###
 
@@ -164,6 +151,9 @@ df['commercial_loans'] = (df['BHCKF158'] + df['BHCKF159'] + df['BHDM1420'] + df[
                           df['BHCKF161'] + df['BHCK1292'] + df['BHCK1296'] + df['BHCK1590'] + df['BHDM1766'] + df['BHDMJ454'] +
                           df['BHDM1545']  + df['BHDM2165'] + df['BHDMKX57'] )
 
+
+### Output Aggregate Quantity Date by Quarter for Total Market Size ####
+df[['date','total_deposits','consumer_loans','commercial_loans']].groupby('date').sum().to_csv("Data/MarketSizeByQuarter.csv")
 ### Income (Revenue?) Series ###
 
 # create deposit, consumer loan and commercial loan income/expense series
@@ -184,14 +174,34 @@ df['commercial_loan_nco'] = ( ( df['BHCKC891'] + df['BHCKC893'] + df['BHCK3584']
                                 df['BHCK4665'] + df['BHCK4617'] + df['BHCKB515'] + df['BHCKK133'] + df['BHCKK206'] + df['BHCK4628'] +
                                 df['BHCKF187'] + df['BHCKF188'] + df['BHCKKX51'] ) )
 
-### Cost Series ###
-df['salaries'] = df['BHCK4315']
-df['premises_cost'] = df['BHCK4217']
-df['other_cost'] = df['BHCK4092']
-df['total_cost'] = df['BHCK4093']
+### Cost Series (cumulative) ###
+df['salaries_cum'] = df['BHCK4135']
+df['premises_cost_cum'] = df['BHCK4217']
+df['other_cost_cum'] = df['BHCK4092']
+df['total_cost_cum'] = df['BHCK4093']
+
+df['salaries'] =  np.nan
+df['premises_cost'] = np.nan
+df['other_cost'] = np.nan
+df['total_cost'] = np.nan
 
 ### Bank Size ###
 df['total_assets'] = df['BHCK2170']
+
+
+#### Limit to only banks of a certain size ####
+##  20 Largest Banks in total assets at the end of 2020
+top10_idx = df[df.date == '2020-12-31T00:00:00.000000000']['total_assets'].nlargest(20).index
+for i in range(len(top10_idx)):
+    idx =  df[df.index == top10_idx[i] ]['RSSD9001'].unique()[0]
+    if i ==0:
+        temp_df = df[df.RSSD9001 == idx]
+    else:
+        temp_df = temp_df.append( df[df.RSSD9001 == idx] )
+
+# re-write the dataframe with the smaller subset of banks
+df = temp_df.copy()
+
 
 
 for idx, bank in enumerate( df.RSSD9001.unique() ):
@@ -217,8 +227,11 @@ for idx, bank in enumerate( df.RSSD9001.unique() ):
                                                                                              df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4115'] -
                                                                                              df[ (df.date==t) & (df.RSSD9001 == bank) ]['commercial_loan_nco'])
 
-            df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'con_nco' ] = (4/3)*df[ (df.date==t) & (df.RSSD9001 == bank) ]['consumer_loan_nco']
-            df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'com_nco' ] = (4/3)*df[ (df.date==t) & (df.RSSD9001 == bank) ]['commercial_loan_nco']
+            df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'salaries' ] = (4/3)*df[ (df.date==t) & (df.RSSD9001 == bank) ]['salaries_cum']
+            df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'premises_cost' ] = (4/3)*df[ (df.date==t) & (df.RSSD9001 == bank) ]['premises_cost_cum']
+
+            df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'other_cost' ] = (4/3)*df[ (df.date==t) & (df.RSSD9001 == bank) ]['other_cost_cum']
+            df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'total_cost' ] = (4/3)*df[ (df.date==t) & (df.RSSD9001 == bank) ]['total_cost_cum']
 
         else:
 
@@ -250,6 +263,12 @@ for idx, bank in enumerate( df.RSSD9001.unique() ):
 
                 df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'con_nco' ] = 4*df[ (df.date==t) & (df.RSSD9001 == bank) ]['consumer_loan_nco']
                 df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'com_nco' ] = 4*df[ (df.date==t) & (df.RSSD9001 == bank) ]['commercial_loan_nco']
+
+                df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'salaries' ] = 4*df[ (df.date==t) & (df.RSSD9001 == bank) ]['salaries_cum']
+                df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'premises_cost' ] = 4*df[ (df.date==t) & (df.RSSD9001 == bank) ]['premises_cost_cum']
+
+                df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'other_cost' ] = 4*df[ (df.date==t) & (df.RSSD9001 == bank) ]['other_cost_cum']
+                df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'total_cost' ] = 4*df[ (df.date==t) & (df.RSSD9001 == bank) ]['total_cost_cum']
 
             else: # if (Q2,Q3,Q4), compute newly accrued expenses, then multiply by 4
 
@@ -312,9 +331,19 @@ for idx, bank in enumerate( df.RSSD9001.unique() ):
                     df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'con_nco' ] = 4*(np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['consumer_loan_nco']) - np.float(df[(df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['consumer_loan_nco']) )
                     df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'com_nco' ] = 4*(np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['commercial_loan_nco']) - np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['commercial_loan_nco']) )
 
+                    df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'salaries' ] = 4*(np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['salaries_cum']) - np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['salaries_cum']) )
+                    df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'premises_cost' ] = 4*(np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['premises_cost_cum']) - np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['premises_cost_cum']) )
+                    df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'other_cost' ] = 4*(np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['other_cost_cum']) - np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['other_cost_cum']) )
+                    df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'total_cost' ] = 4*(np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['total_cost_cum']) - np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['total_cost_cum']) )
+
                 except:
                     df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'con_nco' ] = np.nan
                     df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'com_nco' ] = np.nan
+                    df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'salaries' ] = np.nan
+                    df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'premises_cost' ] = np.nan
+                    df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'other_cost' ] = np.nan
+                    df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'total_cost' ] = np.nan
+
 
 
             #if not last quarter of fiscal year
@@ -330,6 +359,10 @@ df['deposit_rate'] = df['deposit_expense']/df['total_deposits']
 df['consumer_rate'] = df['consumer_loan_int']/df['consumer_loans']
 
 df['commercial_rate'] = df['commercial_loan_int']/df['commercial_loans']
+
+# output a refined dataframe
+df[['date','RSSD9001','total_assets','deposit_rate','consumer_rate','commercial_rate','total_deposits','consumer_loans','commercial_loans','salaries','premises_cost','other_cost','total_cost']].to_csv('Data/frdata_refined.csv')
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #                                           #
@@ -512,7 +545,3 @@ plt.ylabel('Annualized Rate (basis points)',fontsize=15)
 plt.axvspan(df.date.unique()[85], df.date.unique()[91], facecolor='red', alpha=0.25)
 plt.axvspan(df.date.unique()[134], df.date.unique()[135], facecolor='red', alpha=0.25)
 plt.legend(fontsize=15)
-
-
-# output a refined dataframe
-df[['date','RSSD9001','deposit_rate','consumer_rate','commercial_rate','total_deposits','consumer_loans','commercial_loans']].to_csv('Data/frdata_refined.csv')

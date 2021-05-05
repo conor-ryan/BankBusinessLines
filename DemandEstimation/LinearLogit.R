@@ -4,38 +4,124 @@ library(ggplot2)
 setwd("G:/Shared drives/BankBusinessLines")
 
 #### Read in Data ####
-data = as.data.table(read.csv("Data/loan_deposit_data.csv"))
+data = as.data.table(read.csv("Data/frdata_refined.csv"))
+
+#### Average Trends (Quality Check) ####
+trends = data[,list(total_deposits=sum(total_deposits,na.rm=TRUE),
+                    consumer_loans=sum(consumer_loans,na.rm=TRUE),
+                    commercial_loans=sum(commercial_loans,na.rm=TRUE),
+                    deposit_rate=mean(deposit_rate,na.rm=TRUE),
+                    consumer_rate=mean(consumer_rate,na.rm=TRUE),
+                    commericial_rate=mean(commercial_rate,na.rm=TRUE),
+                    salaries=sum(salaries,na.rm=TRUE),
+                    premises_cost=sum(premises_cost,na.rm=TRUE),
+                    other_cost=sum(other_cost,na.rm=TRUE),
+                    total_cost=sum(total_cost,na.rm=TRUE)),
+              by="date"]
+trends[,date:=as.Date(date)]
+
+### Quantity Trends
+ggplot(trends) + 
+  geom_line(aes(x=date,y=total_deposits,color="Deposits")) + 
+  geom_line(aes(x=date,y=consumer_loans,color="Consumer Loans")) + 
+  geom_line(aes(x=date,y=commercial_loans,color="Commercial Loans"))
+
+### Interest Trends
+ggplot(trends) + 
+  geom_line(aes(x=date,y=deposit_rate,color="Deposits")) + 
+  geom_line(aes(x=date,y=consumer_rate,color="Consumer Loans")) + 
+  geom_line(aes(x=date,y=commericial_rate,color="Commercial Loans"))
+
+### Cost Trends
+ggplot(trends) + 
+  geom_line(aes(x=date,y=salaries,color="Salaries")) + 
+  geom_line(aes(x=date,y=premises_cost,color="Premises")) + 
+  geom_line(aes(x=date,y=other_cost,color="Other")) + 
+  geom_line(aes(x=date,y=total_cost,color="Total Cost"))
 
 
-## Keep data series that has consumer loan rate, set INF to missing
-data = data[!is.na(consumer_rate)]
-data[,sum(deposit_rate==-Inf |deposit_rate==Inf,na.rm=TRUE)]
-data[deposit_rate==-Inf |deposit_rate==Inf ,deposit_rate:=NA]
-data[,sum(consumer_rate==-Inf |consumer_rate==Inf)]
-data[consumer_rate==-Inf |consumer_rate==Inf ,consumer_rate:=NA]
-data[,sum(commercial_rate==-Inf|commercial_rate==Inf)]
-data[commercial_rate==-Inf|commercial_rate==Inf,commercial_rate:=NA]
 
 
-data[,summary(lm(consumer_rate~deposit_rate+date + as.factor(ID)))]
-data[,summary(lm(commercial_rate~deposit_rate))]
-data[,summary(lm(consumer_rate~commercial_rate))]
+#### Create Market Shares ####
+## Merge in data on total quantities in each quarter
+market = as.data.table(read.csv("Data/MarketSizeByQuarter.csv"))
+names(market) = c("date","mkt_deposits","mkt_consumer_loans","mkt_commercial_loans")
+data = merge(data,market,by="date",all.x=TRUE)
+data[,date:=as.Date(date)]
+
+## Compute Market Share
+data[,deposit_share:=total_deposits/mkt_deposits]
+data[,cons_loan_share:=consumer_loans/mkt_consumer_loans]
+data[,comm_loan_share:=commercial_loans/mkt_commercial_loans]
+
+## Compute Marketshare of the Outside Good 
+data[,deposit_s0:=1-sum(deposit_share),by="date"]
+data[,cons_loan_s0:=1-sum(cons_loan_share),by="date"]
+data[,comm_loan_s0:=1-sum(comm_loan_share),by="date"]
 
 
-#### Big Banks Only (by deposits) ####
-data[,quarterly_deposits:=sum(total_deposits),by="date"]
-data[,deposit_share:=total_deposits/quarterly_deposits]
-data[,avg_share:=mean(deposit_share),by="ID"]
+#### Merge Info on Macro Environment ####
+ffrate = as.data.table(read.csv("Data/OtherData/FEDFUNDS.csv"))
+ffrate[,FEDFUNDS:=as.numeric(as.character(FEDFUNDS))]
+ffrate[,DATE:=as.Date(DATE)]
 
-big = data[avg_share>0.005]
-big[,length(unique(ID))]
-big[,big_deposits:=sum(total_deposits),by="quarterly_deposits"]
-big[,big_bank_ratio:=big_deposits/quarterly_deposits]
-big[,deposit_loan_ratio:=(consumer_loans+commercial_loans)/total_deposits]
+## Need to convert beginning of quarter dates to end of quarter dates
+quarter_map = ffrate[,"DATE"]
+setkey(quarter_map,DATE)
+quarter_map[,index:=1:nrow(quarter_map)]
+quarter_ends = copy(quarter_map)
+quarter_ends[,index:=index-1]
+names(quarter_ends) = c("date_end","index_end")
+quarter_map = merge(quarter_map,quarter_ends,by.x="index",by.y="index_end")
+quarter_map[,date_end:=date_end-1]
+quarter_map[,index:=NULL]
+
+## Merge FF rate data into main data
+ffrate = merge(ffrate,quarter_map,by="DATE")
+data = merge(data,ffrate[,c("date_end","FEDFUNDS")],by.x="date",by.y="date_end",all.x=TRUE)
 
 
-big[,summary(lm(consumer_rate~deposit_rate + date))]
+#### Naive Demand Estimations ####
+data[,depvar:=log(deposit_share)-log(deposit_s0)]
+summary(data[,lm(depvar~deposit_rate+as.factor(RSSD9001)+as.factor(date))])
 
-# Checking Linux Server Git Connection
+data[,depvar:=log(cons_loan_share)-log(cons_loan_s0)]
+summary(data[,lm(depvar~consumer_rate+as.factor(RSSD9001)+as.factor(date))])
 
-ggplot(big[date=="2008-09-30"]) + aes(x=deposit_rate,y=consumer_rate) + geom_point() + geom_smooth(method="lm")
+data[,depvar:=log(comm_loan_share)-log(comm_loan_s0)]
+summary(data[,lm(depvar~commercial_rate+as.factor(RSSD9001)+as.factor(date))])
+
+#### Normalized Costs ####
+data[,salary_perasset:=salaries/total_assets]
+data[,premises_perasset:=premises_cost/total_assets]
+data[,other_perasset:=other_cost/total_assets]
+data[,total_perasset:=total_cost/total_assets]
+
+#### Instrument for Deposit Rate #### 
+dep_iv = data[,lm(deposit_rate~as.factor(RSSD9001)*FEDFUNDS)]
+
+data[!is.na(deposit_rate),deposit_rate_iv:=predict(dep_iv)]
+
+data[,depvar:=log(deposit_share)-log(deposit_s0)]
+summary(data[,lm(depvar~deposit_rate+as.factor(RSSD9001)+as.factor(date))])
+summary(data[,lm(depvar~deposit_rate_iv+as.factor(RSSD9001)+as.factor(date))])
+
+
+#### Instrument for Consumer Loan Rate #### 
+cons_iv = data[,lm(consumer_rate~deposit_rate+salary_perasset+premises_perasset+other_perasset+total_perasset+as.factor(date)+as.factor(RSSD9001))]
+
+data[!is.na(consumer_rate),consumer_rate_iv:=predict(cons_iv)]
+
+data[,depvar:=log(cons_loan_share)-log(cons_loan_s0)]
+summary(data[,lm(depvar~consumer_rate+as.factor(RSSD9001)+as.factor(date))])
+summary(data[,lm(depvar~consumer_rate_iv+as.factor(RSSD9001)+as.factor(date))])
+
+#### Instrument for Commercial Loan Rate #### 
+comm_iv = data[,lm(commercial_rate~deposit_rate+salary_perasset+premises_perasset+other_perasset+total_perasset+as.factor(date)+as.factor(RSSD9001))]
+
+data[!is.na(commercial_rate),commercial_rate_iv:=predict(comm_iv)]
+
+data[,depvar:=log(comm_loan_share)-log(comm_loan_s0)]
+summary(data[,lm(depvar~commercial_rate+as.factor(RSSD9001)+as.factor(date))])
+summary(data[,lm(depvar~commercial_rate_iv+as.factor(RSSD9001)+as.factor(date))])
+
