@@ -80,6 +80,10 @@ quarter_map[,index:=NULL]
 ffrate = merge(ffrate,quarter_map,by="DATE")
 data = merge(data,ffrate[,c("date_end","FEDFUNDS")],by.x="date",by.y="date_end",all.x=TRUE)
 
+#### Merge in Branch Info ####
+load("Data/bankbranches.Rdata")
+data[,year:=as.numeric(format(date,"%Y"))]
+data = merge(data,branches,by.x=c("year","RSSD9001"),by.y=c("YEAR","RSSDHCR"),all.x=TRUE)
 
 #### Naive Demand Estimations ####
 data[,depvar:=log(deposit_share)-log(deposit_s0)]
