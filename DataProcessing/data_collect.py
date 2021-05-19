@@ -19,7 +19,7 @@ os.chdir('G:/Shared drives/BankBusinessLines')
 Line Items
 """
 #RIAD tags
-rssd = ['9999'] # filing date,
+rssd = ['9999','9002'] # filing date, top holding id
 
 bhck = [
                             ###  SCHEDULE HI   ###

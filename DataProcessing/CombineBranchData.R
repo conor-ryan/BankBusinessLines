@@ -13,7 +13,6 @@ for (f in files){
   temp = as.data.table(read.csv(paste("Data/Branches/",f,sep="")))
   names(temp) = toupper(names(temp))
   data_full = rbind(data_full,temp)
-  print(ncol(data_full))
   rm(temp)
 }
 
