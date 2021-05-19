@@ -191,6 +191,8 @@ df['total_assets'] = df['BHCK2170']
 
 #### Limit to only banks of a certain size ####
 ##  20 Largest Banks in total assets at the end of 2020
+## Is it okay that these banks have some attrition in the older years?
+## We are missing Q4 2019, need to download data. 
 top10_idx = df[df.date == '2020-12-31T00:00:00.000000000']['total_assets'].nlargest(20).index
 for i in range(len(top10_idx)):
     idx =  df[df.index == top10_idx[i] ]['RSSD9001'].unique()[0]
