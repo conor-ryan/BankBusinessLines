@@ -15,7 +15,7 @@ for (f in files){
   data_full = rbind(data_full,temp)
   rm(temp)
 }
-
+save(data_full,file="Data/Branches/AllBranchData.rData")
 ## A unique row is YEAR, branch id (BRNUM), and institution id (CERT)
 ## Holding Company IDs are RSSDHCR
 

@@ -48,6 +48,7 @@ market = as.data.table(read.csv("Data/MarketSizeByQuarter.csv"))
 names(market) = c("date","mkt_deposits","mkt_consumer_loans","mkt_commercial_loans")
 data = merge(data,market,by="date",all.x=TRUE)
 data[,date:=as.Date(date)]
+data[,year:=as.numeric(format(date,"%Y"))]
 
 ## Compute Market Share
 data[,deposit_share:=total_deposits/mkt_deposits]
@@ -81,9 +82,44 @@ ffrate = merge(ffrate,quarter_map,by="DATE")
 data = merge(data,ffrate[,c("date_end","FEDFUNDS")],by.x="date",by.y="date_end",all.x=TRUE)
 
 #### Merge in Branch Info ####
+
+
 load("Data/bankbranches.Rdata")
-data[,year:=as.numeric(format(date,"%Y"))]
-data = merge(data,branches,by.x=c("year","RSSD9001"),by.y=c("YEAR","RSSDHCR"),all.x=TRUE)
+
+### Manually Match IDs that are mismatched due to organizational structure
+# branches[RSSDHCR==4368883,RSSDHCR:=2162966] #Morgan Stanley 
+# branches[RSSDHCR==1238565,RSSDHCR:=3606542] # TD Bank
+# branches[RSSDHCR%in%c(1857108),RSSDHCR:=3232316] # HSBC
+# branches[RSSDHCR%in%c(1231333),RSSDHCR:=1245415] # BMO
+# branches[RSSDHCR%in%c(1245796,3833526),RSSDHCR:=1132449] # Citizens 
+# 
+# branches[RSSDHCR%in%c(1048184,2309912),RSSDHCR:=1026632] # Charles Schwab
+# branches[RSSDHCR%in%c(),RSSDHCR:=1447376] # United Services Auto
+# branches[RSSDHCR%in%c(),RSSDHCR:=1951350] # Citi
+# branches[RSSDHCR%in%c(),RSSDHCR:=2277860] # Capital One
+# branches[RSSDHCR%in%c(),RSSDHCR:=3587146] # BNY Mellon
+# 
+
+#### Merge in Parent ID Mappings
+load("Data/MarketStructure/OrgStructureByQuarter.rData")
+data[,datenum:=year(date)*10000+month(date)*100+30]
+nrow(data)
+
+data = merge(data,qtr_map,by.x=c("RSSD9001","datenum"),by.y=c("OFFSPRING","quarter"),all.x=TRUE)
+data[is.na(PARENT),PARENT:=RSSD9001]
+data[,datenum:=NULL]
+
+branches[,datenum:=YEAR*10000+0330]
+branches = merge(branches,qtr_map,by.x=c("RSSDHCR","datenum"),by.y=c("OFFSPRING","quarter"),all.x=TRUE)
+branches[is.na(PARENT),PARENT:=RSSDHCR]
+branches[,datenum:=NULL]
+
+
+df = merge(data,branches,by.x=c("year","PARENT"),by.y=c("YEAR","PARENT"),all.x=TRUE)
+df[year>=1994,table(PARENT,is.na(geo_coverage))]
+
+
+load("Data/Branches/AllBranchData.rData")
 
 #### Naive Demand Estimations ####
 data[,depvar:=log(deposit_share)-log(deposit_s0)]
