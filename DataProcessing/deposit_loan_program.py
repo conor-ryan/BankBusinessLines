@@ -816,7 +816,44 @@ for at,t in enumerate(df.date.unique()):
             
         except:
             df.loc[(df.date==t) & (df.RSSD9001==bank), 'insurance_market_share'] = 0
-                
+    
+#-------------------------------#
+#                               #
+#   Investment Bank Products    #
+#                               #
+#-------------------------------#
+print()
+print()
+print()
+print('Investment Bank Business Line')
+print()
+print()
+print()
+
+# merge FRY15 data with the baseline dataset from FRY9
+#os.chdir('/home/pando004/Desktop/BankData/FRY15')
+df15 = pd.read_csv('Data/fr15data.csv')
+
+df15['date'] = df15['date'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d'))
+df15 = df15.sort_values(by=['date'])
+
+# collect number of unique IDs in FRY15 data, see how many match with FRY9
+fry15_ids = df15.id.unique()         
+fr9_ids = set( df.RSSD9001.unique() )
+it = 0
+for at,idx in enumerate(df15.id.unique()): 
+    if idx in fr9_ids:
+        it = it + 1     
+print(100*it/len(fry15_ids),'% of FRY15 banks in FRY9 dataset')
+print()
+print(100*(1-it/len(df.RSSD9001.unique())),'% of FRY9 banks not included in FRY15 reports')
+
+# find FRY9 variables which correlated with (i) payments, (ii) undrwriting and (iii)
+#   custody accounts, or assume all other banks have zero values in these areas.  
+
+
+
+
 #------------------#
 #                  # 
 #   Data Output    #
