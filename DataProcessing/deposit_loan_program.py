@@ -22,7 +22,7 @@ df = df[ ~(df['date'] < df.date.unique()[86] ) ]
 
 # import market size data
 market_df = pd.read_csv('Data/MarketSizeByQuarter.csv')
-market_df['Date'] = pd.to_datetime( market_df.Date)  
+market_df['Date'] = pd.to_datetime( market_df.Date)
 
 # replace nan entries in data with zero value
 df[['BHCK4174','BHCK6760','BHCK4176','BHCK6761','BHCKA517','BHCKA518','BHCKHK03','BHCKHK04','BHDM1797','BHDM5367',
@@ -51,78 +51,78 @@ df['total_assets'] = df['BHCK2170']
 #### Limit to only banks of a certain size ####
 ##  Collect 20 Largest Banks in terms of (i) consumer loans (ii) commercial loans (iii) deposits and
 ##  (iv) insurance assets for each period.  There will be overlap but it's important to get the largest
-##  firms for each product line in each period.   
+##  firms for each product line in each period.
 
 # initialize list of bank indices and threshold number N
-top_idx = []
-topN = 20 
+# top_idx = []
+# topN = 20
+#
+# # for each quarter
+# for at,t in enumerate(df.date.unique()):
+#
+#     # determine top N consumer lenders
+#     con_idx = list( (df[df.date == t]['BHDM1797'] + df[df.date == t]['BHDM5367'] + df[df.date == t]['BHDM5368']).nlargest(topN).index )
+#
+#     # determine top N commercial lenders
+#     com_idx = list( (df[df.date == t]['BHCKF158'] + df[df.date == t]['BHCKF159'] + df[df.date == t]['BHDM1420'] +
+#                       df[df.date == t]['BHDM1975'] + df[df.date == t]['BHDM1460'] + df[df.date == t]['BHCKF160'] +
+#                       df[df.date == t]['BHCKF161'] + df[df.date == t]['BHCK1292'] + df[df.date == t]['BHCK1296'] +
+#                       df[df.date == t]['BHCK1590'] + df[df.date == t]['BHDM1766'] + df[df.date == t]['BHDMJ454'] +
+#                       df[df.date == t]['BHDM1545'] + df[df.date == t]['BHDM2165'] + df[df.date == t]['BHDMKX57']
+#                       ).nlargest(topN).index )
+#
+#     # determine top N deposit takers
+#     dep_idx = list( (df[df.date == t]['BHDM6631'] + df[df.date == t]['BHDM6636'] ).nlargest(topN).index )
+#
+#     # determine top N insurance providers
+#     ins_idx = list( (df[df.date == t]['BHCKC244'] + df[df.date == t]['BHCKC248'] ).nlargest(topN).index )
+#
+#     # recover bank id's
+#     con_list = []
+#     com_list = []
+#     dep_list = []
+#     ins_list = []
+#
+#     for i in range(topN):
+#         try:
+#             con_list.append( df[df.index == con_idx[i] ]['RSSD9001'].unique()[0] )
+#         except:
+#             pass
+#
+#         try:
+#             com_list.append( df[df.index == com_idx[i] ]['RSSD9001'].unique()[0] )
+#         except:
+#             pass
+#
+#         try:
+#             dep_list.append( df[df.index == dep_idx[i] ]['RSSD9001'].unique()[0] )
+#         except:
+#             pass
+#
+#         try:
+#             ins_list.append( df[df.index == ins_idx[i] ]['RSSD9001'].unique()[0] )
+#         except:
+#             pass
+#
+#     # append list with unique union set
+#     top_idx = list( set(con_list).union( set(com_list),set(dep_list),set(ins_list), set(top_idx) ) )
+#
+# print('Collected a total of', len(top_idx),' bank IDs')
+#
+# #create subset dataframe using bank id's
+# for i in range(len(top_idx)):
+#
+#     if i ==0:
+#         temp_df = df[df.RSSD9001 == top_idx[i]]
+#     else:
+#         temp_df = temp_df.append( df[df.RSSD9001 == top_idx[i]] )
+#
+# df = temp_df.copy()
 
-# for each quarter
-for at,t in enumerate(df.date.unique()):
-    
-    # determine top N consumer lenders
-    con_idx = list( (df[df.date == t]['BHDM1797'] + df[df.date == t]['BHDM5367'] + df[df.date == t]['BHDM5368']).nlargest(topN).index )
-    
-    # determine top N commercial lenders
-    com_idx = list( (df[df.date == t]['BHCKF158'] + df[df.date == t]['BHCKF159'] + df[df.date == t]['BHDM1420'] + 
-                      df[df.date == t]['BHDM1975'] + df[df.date == t]['BHDM1460'] + df[df.date == t]['BHCKF160'] + 
-                      df[df.date == t]['BHCKF161'] + df[df.date == t]['BHCK1292'] + df[df.date == t]['BHCK1296'] + 
-                      df[df.date == t]['BHCK1590'] + df[df.date == t]['BHDM1766'] + df[df.date == t]['BHDMJ454'] + 
-                      df[df.date == t]['BHDM1545'] + df[df.date == t]['BHDM2165'] + df[df.date == t]['BHDMKX57']  
-                      ).nlargest(topN).index )
-        
-    # determine top N deposit takers
-    dep_idx = list( (df[df.date == t]['BHDM6631'] + df[df.date == t]['BHDM6636'] ).nlargest(topN).index )
-        
-    # determine top N insurance providers
-    ins_idx = list( (df[df.date == t]['BHCKC244'] + df[df.date == t]['BHCKC248'] ).nlargest(topN).index )
-    
-    # recover bank id's
-    con_list = []
-    com_list = []
-    dep_list = []
-    ins_list = []
-    
-    for i in range(topN):
-        try:
-            con_list.append( df[df.index == con_idx[i] ]['RSSD9001'].unique()[0] )
-        except:
-            pass 
-        
-        try:
-            com_list.append( df[df.index == com_idx[i] ]['RSSD9001'].unique()[0] )
-        except: 
-            pass
-        
-        try:
-            dep_list.append( df[df.index == dep_idx[i] ]['RSSD9001'].unique()[0] )
-        except:
-            pass
-        
-        try:
-            ins_list.append( df[df.index == ins_idx[i] ]['RSSD9001'].unique()[0] )
-        except:
-            pass 
-    
-    # append list with unique union set 
-    top_idx = list( set(con_list).union( set(com_list),set(dep_list),set(ins_list), set(top_idx) ) )
-    
-print('Collected a total of', len(top_idx),' bank IDs')
-
-#create subset dataframe using bank id's
-for i in range(len(top_idx)):
-
-    if i ==0:
-        temp_df = df[df.RSSD9001 == top_idx[i]]
-    else:
-        temp_df = temp_df.append( df[df.RSSD9001 == top_idx[i]] )
-
-df = temp_df.copy()
-        
-#---------------------# 
-#                     #  
+#---------------------#
+#                     #
 #   Consumer Loans    #
-#                     #  
+#                     #
 #---------------------#
 
 # create consumer loan net charge-off (NCO) and total consumer lending
@@ -138,14 +138,14 @@ df['consumer_default_rate']   = np.nan
 
 df['consumer_rate_lagged']      = np.nan
 
-am_rate = 1/10 
+am_rate = 1/10
 
 # first compute quartlery revenue for each bank, each quarter
 for idx, bank in enumerate( df.RSSD9001.unique() ):
-    
+
     quart = 1
     print(idx,' out of',len(df.RSSD9001.unique()))
-    
+
     for at, t in enumerate( df.date.unique() ):
         if at ==0:
             try:
@@ -157,13 +157,13 @@ for idx, bank in enumerate( df.RSSD9001.unique() ):
                 try:
                     df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'consumer_revenue']   = np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4435'])
                 except:
-                    pass 
+                    pass
             else:
                 try:
                     df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'consumer_revenue']   = np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4435']) - np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4435'])
                 except:
                     pass
-                
+
             if quart < 3:
                 quart = quart + 1
             else:
@@ -177,93 +177,93 @@ for idx, bank in enumerate( df.RSSD9001.unique() ):
 
     # initialize multiplier
     quart = 1  # first observed quarter is Q1 for 2008
-    
-    # for each time period 
+
+    # for each time period
     for at, t in enumerate( df.date.unique() ):
-            
+
         # compute default rate
             # sum of charge-offs (time t)/ sum of loans (t-1)
         if at == 0:  # first period observed is 1986 Q3; can only use contemporaneous values
-        
+
             try:
-                # default rate 
+                # default rate
                 default_rate = ( np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['consumer_loan_nco'])/
                                        np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['consumer_loans']) )
-                
-                # new lending 
+
+                # new lending
                 new_lending = ( np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['consumer_loans']) -
-                                (1-am_rate)*(1-default_rate)*np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['consumer_loans']) )  
-    
+                                (1-am_rate)*(1-default_rate)*np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['consumer_loans']) )
+
                 # new rate
                 agg_rev = np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4435'])
-                
-                new_rate =  (agg_rev - ( (1-am_rate)*(1-default_rate) )*np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4435']))/new_lending  
-                lag_rate =  (np.float(df[ (df.date==df.date.unique()[at+1]) & (df.RSSD9001 == bank) ]['consumer_revenue']) - ( (1-am_rate)*(1-default_rate) )*np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['consumer_revenue']))/new_lending  
+
+                new_rate =  (agg_rev - ( (1-am_rate)*(1-default_rate) )*np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4435']))/new_lending
+                lag_rate =  (np.float(df[ (df.date==df.date.unique()[at+1]) & (df.RSSD9001 == bank) ]['consumer_revenue']) - ( (1-am_rate)*(1-default_rate) )*np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['consumer_revenue']))/new_lending
             except:
                 new_lending = np.nan
                 new_rate = np.nan
                 lag_rate = np.nan
                 default_rate = 0
-                
-            # record new lending, rate and period revenues                                                                                                                       
+
+            # record new lending, rate and period revenues
             df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'new_consumer_loans'] = new_lending
             df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'consumer_rate']      = new_rate
             df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'consumer_rate_lagged']      = lag_rate
             df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'consumer_default_rate']   = default_rate
-            
+
         else:
 
             if quart == 0:
-                
+
                 try:
                     default_rate = ( np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['consumer_loan_nco'])/
                                      np.float(df[ (df.date ==df.date.unique()[at-1]) & (df.RSSD9001 == bank)]['consumer_loans']) )
-        
+
                     new_lending = ( np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['consumer_loans']) -
-                                    (1-am_rate)*(1-default_rate)*np.float(df[ (df.date ==df.date.unique()[at-1]) & (df.RSSD9001 == bank)]['consumer_loans']) )  
-                    
+                                    (1-am_rate)*(1-default_rate)*np.float(df[ (df.date ==df.date.unique()[at-1]) & (df.RSSD9001 == bank)]['consumer_loans']) )
+
                     # new rate
                     agg_rev = np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4435'])
-                    
-                    new_rate =  (agg_rev - ( (1-am_rate)*(1-default_rate) )*np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['consumer_revenue']))/new_lending  
-                    lag_rate =  (np.float(df[ (df.date==df.date.unique()[at+1]) & (df.RSSD9001 == bank) ]['consumer_revenue']) - ( (1-am_rate)*(1-default_rate) )*np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['consumer_revenue']))/new_lending  
-                
+
+                    new_rate =  (agg_rev - ( (1-am_rate)*(1-default_rate) )*np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['consumer_revenue']))/new_lending
+                    lag_rate =  (np.float(df[ (df.date==df.date.unique()[at+1]) & (df.RSSD9001 == bank) ]['consumer_revenue']) - ( (1-am_rate)*(1-default_rate) )*np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['consumer_revenue']))/new_lending
+
                 except:
                     new_lending = np.nan
                     new_rate = np.nan
                     lag_rate = np.nan
                     default_rate = 0
 
-                # record new lending, rate and period revenues                                                                                                                       
+                # record new lending, rate and period revenues
                 df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'new_consumer_loans'] = new_lending
                 df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'consumer_rate']      = new_rate
                 df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'consumer_rate_lagged']      = lag_rate
                 df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'consumer_default_rate']   = default_rate
 
             else:
-                
+
                 try:
                     default_rate = ( (np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['consumer_loan_nco']) -
                                       np.float(df[ (df.date ==df.date.unique()[at-1]) & (df.RSSD9001 == bank)]['consumer_loan_nco']))/
                                                np.float(df[ (df.date ==df.date.unique()[at-1]) & (df.RSSD9001 == bank)]['consumer_loans']) )
-        
+
                     new_lending = ( np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['consumer_loans']) -
-                                    (1-am_rate)*(1-default_rate)*np.float(df[ (df.date ==df.date.unique()[at-1]) & (df.RSSD9001 == bank)]['consumer_loans']) )  
-                    
+                                    (1-am_rate)*(1-default_rate)*np.float(df[ (df.date ==df.date.unique()[at-1]) & (df.RSSD9001 == bank)]['consumer_loans']) )
+
                     # new rate
                     agg_rev = np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4435']) - np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4435'])
-                    
-                    new_rate =  (agg_rev - ( (1-am_rate)*(1-default_rate) )*np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['consumer_revenue']))/new_lending  
-                    lag_rate =  (np.float(df[ (df.date==df.date.unique()[at+1]) & (df.RSSD9001 == bank) ]['consumer_revenue']) - ( (1-am_rate)*(1-default_rate) )*np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['consumer_revenue']))/new_lending  
-                
+
+                    new_rate =  (agg_rev - ( (1-am_rate)*(1-default_rate) )*np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['consumer_revenue']))/new_lending
+                    lag_rate =  (np.float(df[ (df.date==df.date.unique()[at+1]) & (df.RSSD9001 == bank) ]['consumer_revenue']) - ( (1-am_rate)*(1-default_rate) )*np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['consumer_revenue']))/new_lending
+
                 except:
                     new_lending = np.nan
                     new_rate = np.nan
                     lag_rate = np.nan
                     agg_rev = 0
                     default_rate = 0
-    
-                # record new lending, rate and period revenues                                                                                                                       
+
+                # record new lending, rate and period revenues
                 df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'new_consumer_loans'] = new_lending
                 df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'consumer_rate']      = new_rate
                 df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'consumer_rate_lagged']      = lag_rate
@@ -285,66 +285,66 @@ total_lending= []
 spot_rate_lagged = []
 
 for at,t in enumerate(df.date.unique()):
-    
+
     agg_issuance.append( np.nansum(df[df.date==t]['new_consumer_loans'])/(1000*1000) )
     agg_issuance_rate.append( 100*np.nansum(df[df.date==t]['new_consumer_loans'])/np.nansum(df[df.date==t]['consumer_loans']) )
     total_lending.append( np.nansum(df[df.date==t]['consumer_loans'])/(1000*1000) )
 
     # record average default rate, weighted by market share
-    temp_default = 0 
+    temp_default = 0
     temp_agg     = 0
     agg_loans = np.nansum(df[df.date==t]['new_consumer_loans'])
-    
+
     if agg_loans <= 0:
         default_rate.append(0)
-    else: 
-        for idx, bank in enumerate( df.RSSD9001.unique() ):                
+    else:
+        for idx, bank in enumerate( df.RSSD9001.unique() ):
             try:
                 if (np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_consumer_loans'])*0 == 0): # not handling ==np.nan well
-                    
+
                     if np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_consumer_loans']) > 0:
                         temp_default = temp_default + np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['consumer_default_rate'])*np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_consumer_loans'])
                         temp_agg     = temp_agg     + np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_consumer_loans'])
             except:
-                pass 
+                pass
         default_rate.append( 100*temp_default/temp_agg )
-        
+
     # record average spot rate, weighted by market share
-    temp_rate = 0 
+    temp_rate = 0
     temp_agg     = 0
     agg_loans = np.nansum(df[df.date==t]['new_consumer_loans'])
-    
+
     if (agg_loans <= 0) or (np.nansum(df[(df.date==t)]['consumer_rate']) <= 0):
         spot_rate.append(0)
-    else: 
-        for idx, bank in enumerate( df.RSSD9001.unique() ):                
+    else:
+        for idx, bank in enumerate( df.RSSD9001.unique() ):
             try:
                 if (np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_consumer_loans'])*0 == 0) and (np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['consumer_rate'])*0 == 0): # not handling ==np.nan well
-                    
+
                     if np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_consumer_loans']) > 0:
                         temp_rate = temp_rate + np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['consumer_rate'])*np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_consumer_loans'])
                         temp_agg  = temp_agg     + np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_consumer_loans'])
             except:
-                pass 
+                pass
         spot_rate.append( temp_rate/temp_agg )
 
     # record average spot rate, weighted by market share
-    temp_rate = 0 
+    temp_rate = 0
     temp_agg     = 0
     agg_loans = np.nansum(df[df.date==t]['new_consumer_loans'])
-    
+
     if (agg_loans <= 0) or (np.nansum(df[(df.date==t)]['consumer_rate_lagged']) <= 0):
         spot_rate_lagged.append(0)
-    else: 
-        for idx, bank in enumerate( df.RSSD9001.unique() ):                
+    else:
+        for idx, bank in enumerate( df.RSSD9001.unique() ):
             try:
                 if (np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_consumer_loans'])*0 == 0) and (np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['consumer_rate_lagged'])*0 == 0): # not handling ==np.nan well
-                    
+
                     if np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_consumer_loans']) > 0:
                         temp_rate = temp_rate + np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['consumer_rate_lagged'])*np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_consumer_loans'])
                         temp_agg  = temp_agg     + np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_consumer_loans'])
             except:
-                pass 
+                pass
         spot_rate_lagged.append( temp_rate/temp_agg )
 
 # create market shares for consumer loan issuance (treat negative issuance as zero)
@@ -353,28 +353,28 @@ excess_market_share = []
 
 # for each time period
 for at,t in enumerate(df.date.unique()):
-    
+
     # compute total market lending
     temp_agg_lend = np.float( market_df[ market_df.Date == t ]['Consumer_Loan_Market'] )
     temp_share = 0
-    
+
     # compute market shares
     if temp_agg_lend > 0:
-        # for each bank 
-        for idx,bank in enumerate(df.RSSD9001.unique()):    
-        
+        # for each bank
+        for idx,bank in enumerate(df.RSSD9001.unique()):
+
             # if loan issuance is positive, divide lending by agg lending variable, record in dataframe
             try:
                 if np.float(df[ (df.date == t) & (df.RSSD9001 == bank)]['new_consumer_loans']) > 0:
-                    
+
                     df.loc[ (df.date == t) & (df.RSSD9001 == bank), 'consumer_market_share'] = 100*np.float(df[ (df.date == t) & (df.RSSD9001 == bank)]['new_consumer_loans'])/temp_agg_lend
                     temp_share = temp_share + np.float(df[ (df.date == t) & (df.RSSD9001 == bank)]['new_consumer_loans'])/temp_agg_lend
             except:
                 df.loc[ (df.date == t) & (df.RSSD9001 == bank), 'consumer_market_share'] = 0
-                
+
     else:
         df.loc[(df.date == t), 'consumer_market_share' ] = 0
-        
+
     excess_market_share.append( 100*(1- temp_share) )
 
 plt.close('all')
@@ -471,9 +471,9 @@ am_rate_com = 1/10  # commercial repayment rate
 
 # first compute quartlery revenue for each bank, each quarter
 for idx, bank in enumerate( df.RSSD9001.unique() ):
-    
+
     quart = 1
-    
+
     for at, t in enumerate( df.date.unique() ):
         if at ==0:
             try:
@@ -491,21 +491,21 @@ for idx, bank in enumerate( df.RSSD9001.unique() ):
                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4065']) +
                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4115']) )
                 except:
-                    pass 
+                    pass
             else:
                 try:
                     df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'commercial_revenue']   = ((   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4436']) +
                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKF821']) +
                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4065']) +
-                                  np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4115']) ) - 
-                                  
+                                  np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4115']) ) -
+
                                 ( np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4436']) +
                                   np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKF821']) +
                                   np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4065']) +
                                   np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4115']) ) )
                 except:
                     pass
-                
+
             if quart < 3:
                 quart = quart + 1
             else:
@@ -519,67 +519,67 @@ for idx, bank in enumerate( df.RSSD9001.unique() ):
 
     # initialize multiplier
     quart = 1  # first observed quarter is Q3 for 1986
-    
-    # for each time period 
+
+    # for each time period
     for at, t in enumerate( df.date.unique() ):
-            
+
         # compute default rate
             # sum of charge-offs (time t)/ sum of loans (t-1)
         if at == 0:  # first period observed is 1986 Q3; can only use contemporaneous values
-        
+
             try:
-                # default rate 
+                # default rate
                 default_rate = ( np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['commercial_loan_nco'])/
                                        np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['commercial_loans']) )
-                
-                # new lending 
+
+                # new lending
                 new_lending = ( np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['commercial_loans']) -
-                                (1-am_rate_com)*(1-default_rate)*np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['commercial_loans']) )  
-    
+                                (1-am_rate_com)*(1-default_rate)*np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['commercial_loans']) )
+
                 # new rate
                 agg_rev = ( np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4436']) +
                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKF821']) +
                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4065']) +
                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4115']) )
-                
-                new_rate =  (agg_rev - ( (1-am_rate_com)*(1-default_rate) )*agg_rev)/new_lending  
-                lag_rate =  (np.float(df[ (df.date==df.date.unique()[at+1]) & (df.RSSD9001 == bank) ]['commercial_revenue']) - ( (1-am_rate_com)*(1-default_rate) )*np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['commercial_revenue']))/new_lending  
-                
+
+                new_rate =  (agg_rev - ( (1-am_rate_com)*(1-default_rate) )*agg_rev)/new_lending
+                lag_rate =  (np.float(df[ (df.date==df.date.unique()[at+1]) & (df.RSSD9001 == bank) ]['commercial_revenue']) - ( (1-am_rate_com)*(1-default_rate) )*np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['commercial_revenue']))/new_lending
+
             except:
                 new_lending = np.nan
                 new_rate = np.nan
                 lag_rate = np.nan
                 agg_rev = 0
                 default_rate = 0
-                
-            # record new lending, rate and period revenues                                                                                                                       
+
+            # record new lending, rate and period revenues
             df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'new_commercial_loans'] = new_lending
             df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'commercial_rate']      = new_rate
             df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'commercial_rate_lagged']      = lag_rate
             df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'commercial_revenue']   = agg_rev
             df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'commercial_default_rate']   = default_rate
-            
+
         else:
 
             if quart == 0:
-                
+
                 try:
                     default_rate = ( np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['commercial_loan_nco'])/
                                      np.float(df[ (df.date ==df.date.unique()[at-1]) & (df.RSSD9001 == bank)]['commercial_loans']) )
-        
+
                     new_lending = ( np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['commercial_loans']) -
-                                    (1-am_rate_com)*(1-default_rate)*np.float(df[ (df.date ==df.date.unique()[at-1]) & (df.RSSD9001 == bank)]['commercial_loans']) )  
-                    
+                                    (1-am_rate_com)*(1-default_rate)*np.float(df[ (df.date ==df.date.unique()[at-1]) & (df.RSSD9001 == bank)]['commercial_loans']) )
+
                     # new rate
                     agg_rev = (   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4436']) +
                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKF821']) +
                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4065']) +
                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4115']) )
-                    
-                    new_rate =  (agg_rev - ( (1-am_rate_com)*(1-default_rate) )*np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['commercial_revenue']))/new_lending  
 
-                    lag_rate =  (np.float(df[ (df.date==df.date.unique()[at+1]) & (df.RSSD9001 == bank) ]['commercial_revenue']) - ( (1-am_rate_com)*(1-default_rate) )*np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['commercial_revenue']))/new_lending  
-                
+                    new_rate =  (agg_rev - ( (1-am_rate_com)*(1-default_rate) )*np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['commercial_revenue']))/new_lending
+
+                    lag_rate =  (np.float(df[ (df.date==df.date.unique()[at+1]) & (df.RSSD9001 == bank) ]['commercial_revenue']) - ( (1-am_rate_com)*(1-default_rate) )*np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['commercial_revenue']))/new_lending
+
                 except:
                     new_lending = np.nan
                     new_rate = np.nan
@@ -587,7 +587,7 @@ for idx, bank in enumerate( df.RSSD9001.unique() ):
                     agg_rev = 0
                     default_rate = 0
 
-                # record new lending, rate and period revenues                                                                                                                       
+                # record new lending, rate and period revenues
                 df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'new_commercial_loans'] = new_lending
                 df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'commercial_rate']      = new_rate
                 df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'commercial_rate_lagged']      = lag_rate
@@ -595,30 +595,30 @@ for idx, bank in enumerate( df.RSSD9001.unique() ):
                 df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'commercial_default_rate']   = default_rate
 
             else:
-                
+
                 try:
                     default_rate = ( (np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['commercial_loan_nco']) -
                                       np.float(df[ (df.date ==df.date.unique()[at-1]) & (df.RSSD9001 == bank)]['commercial_loan_nco']))/
                                                np.float(df[ (df.date ==df.date.unique()[at-1]) & (df.RSSD9001 == bank)]['commercial_loans']) )
-        
+
                     new_lending = ( np.float(df[ (df.date ==t) & (df.RSSD9001 == bank)]['commercial_loans']) -
-                                    (1-am_rate_com)*(1-default_rate)*np.float(df[ (df.date ==df.date.unique()[at-1]) & (df.RSSD9001 == bank)]['commercial_loans']) )  
-                    
+                                    (1-am_rate_com)*(1-default_rate)*np.float(df[ (df.date ==df.date.unique()[at-1]) & (df.RSSD9001 == bank)]['commercial_loans']) )
+
                     # new rate
                     agg_rev =((   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4436']) +
                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKF821']) +
                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4065']) +
-                                  np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4115']) ) - 
-                                  
+                                  np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4115']) ) -
+
                                 ( np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4436']) +
                                   np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKF821']) +
                                   np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4065']) +
                                   np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4115']) ) )
-                                                  
-                                        
-                    new_rate =  (agg_rev - ( (1-am_rate_com)*(1-default_rate) )*np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['commercial_revenue']))/new_lending  
-                    
-                    lag_rate =  (np.float(df[ (df.date==df.date.unique()[at+1]) & (df.RSSD9001 == bank) ]['commercial_revenue']) - ( (1-am_rate_com)*(1-default_rate) )*np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['commercial_revenue']))/new_lending  
+
+
+                    new_rate =  (agg_rev - ( (1-am_rate_com)*(1-default_rate) )*np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['commercial_revenue']))/new_lending
+
+                    lag_rate =  (np.float(df[ (df.date==df.date.unique()[at+1]) & (df.RSSD9001 == bank) ]['commercial_revenue']) - ( (1-am_rate_com)*(1-default_rate) )*np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['commercial_revenue']))/new_lending
 
                 except:
                     new_lending = np.nan
@@ -626,8 +626,8 @@ for idx, bank in enumerate( df.RSSD9001.unique() ):
                     lag_rate = np.nan
                     agg_rev = 0
                     default_rate = 0
-    
-                # record new lending, rate and period revenues                                                                                                                       
+
+                # record new lending, rate and period revenues
                 df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'new_commercial_loans'] = new_lending
                 df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'commercial_rate']      = new_rate
                 df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'commercial_rate_lagged']      = lag_rate
@@ -650,66 +650,66 @@ total_lending= []
 spot_rate_lagged = []
 
 for at,t in enumerate(df.date.unique()):
-    
+
     agg_issuance.append( np.nansum(df[df.date==t]['new_commercial_loans'])/(1000*1000) )
     agg_issuance_rate.append( 100*np.nansum(df[df.date==t]['new_commercial_loans'])/np.nansum(df[df.date==t]['commercial_loans']) )
     total_lending.append( np.nansum(df[df.date==t]['commercial_loans'])/(1000*1000) )
 
     # record average default rate, weighted by market share
-    temp_default = 0 
+    temp_default = 0
     temp_agg     = 0
     agg_loans = np.nansum(df[df.date==t]['new_commercial_loans'])
-    
+
     if agg_loans <= 0:
         default_rate.append(0)
-    else: 
-        for idx, bank in enumerate( df.RSSD9001.unique() ):                
+    else:
+        for idx, bank in enumerate( df.RSSD9001.unique() ):
             try:
                 if (np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_commercial_loans'])*0 == 0): # not handling ==np.nan well
-                    
+
                     if np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_commercial_loans']) > 0:
                         temp_default = temp_default + np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['commercial_default_rate'])*np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_commercial_loans'])
                         temp_agg     = temp_agg     + np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_commercial_loans'])
             except:
-                pass 
+                pass
         default_rate.append( 100*temp_default/temp_agg )
-        
+
     # record average spot rate, weighted by market share
-    temp_rate = 0 
+    temp_rate = 0
     temp_agg     = 0
     agg_loans = np.nansum(df[df.date==t]['new_commercial_loans'])
-    
+
     if (agg_loans <= 0) or (np.nansum(df[(df.date==t)]['commercial_rate']) <= 0):
         spot_rate.append(0)
-    else: 
-        for idx, bank in enumerate( df.RSSD9001.unique() ):                
+    else:
+        for idx, bank in enumerate( df.RSSD9001.unique() ):
             try:
                 if (np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_commercial_loans'])*0 == 0) and (np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['commercial_rate'])*0 == 0): # not handling ==np.nan well
-                    
+
                     if np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_commercial_loans']) > 0:
                         temp_rate = temp_rate + np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['commercial_rate'])*np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_commercial_loans'])
                         temp_agg  = temp_agg     + np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_commercial_loans'])
             except:
-                pass 
+                pass
         spot_rate.append( temp_rate/temp_agg )
 
     # record average spot rate, weighted by market share
-    temp_rate = 0 
+    temp_rate = 0
     temp_agg     = 0
     agg_loans = np.nansum(df[df.date==t]['new_commercial_loans'])
-    
+
     if (agg_loans <= 0) or (np.nansum(df[(df.date==t)]['commercial_rate_lagged']) <= 0):
         spot_rate_lagged.append(0)
-    else: 
-        for idx, bank in enumerate( df.RSSD9001.unique() ):                
+    else:
+        for idx, bank in enumerate( df.RSSD9001.unique() ):
             try:
                 if (np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_commercial_loans'])*0 == 0) and (np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['commercial_rate_lagged'])*0 == 0): # not handling ==np.nan well
-                    
+
                     if np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_commercial_loans']) > 0:
                         temp_rate = temp_rate + np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['commercial_rate_lagged'])*np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_commercial_loans'])
                         temp_agg  = temp_agg     + np.float(df[(df.date==t) & (df.RSSD9001 == bank)]['new_commercial_loans'])
             except:
-                pass 
+                pass
         spot_rate_lagged.append( temp_rate/temp_agg )
 
 # create market shares for consumer loan issuance (treat negative issuance as zero)
@@ -718,29 +718,29 @@ excess_market_share = []
 
 # for each time period
 for at,t in enumerate(df.date.unique()):
-    
+
     # compute total market lending
-    # initialize agg lending variable 
+    # initialize agg lending variable
     temp_agg_lend = np.float( market_df[ market_df.Date == t ]['Commercial_Loan_Market'] )
     temp_share = 0
-            
+
     # compute market shares
     if temp_agg_lend > 0:
-        # for each bank 
-        for idx,bank in enumerate(df.RSSD9001.unique()):    
-        
+        # for each bank
+        for idx,bank in enumerate(df.RSSD9001.unique()):
+
             # if loan issuance is positive, divide lending by agg lending variable, record in dataframe
             try:
                 if np.float(df[ (df.date == t) & (df.RSSD9001 == bank)]['new_commercial_loans']) > 0:
-                    
+
                     df.loc[ (df.date == t) & (df.RSSD9001 == bank), 'commercial_market_share'] = 100*np.float(df[ (df.date == t) & (df.RSSD9001 == bank)]['new_commercial_loans'])/temp_agg_lend
                     temp_share = temp_share + np.float(df[ (df.date == t) & (df.RSSD9001 == bank)]['new_commercial_loans'])/temp_agg_lend
             except:
                 df.loc[ (df.date == t) & (df.RSSD9001 == bank), 'commercial_market_share'] = 0
-                
+
     else:
         df.loc[(df.date == t), 'commercial_market_share' ] = 0
-        
+
     excess_market_share.append( 100*(1-temp_share) )
 
 plt.close('all')
@@ -935,34 +935,34 @@ for idx, bank in enumerate( df.RSSD9001.unique() ):
 # define return/rate series
 df['deposit_rate'] = df['deposit_expense']/df['total_deposits']
 
-# compute deposit market shares 
+# compute deposit market shares
 df['deposit_market_share'] = 0
 excess_market_share = []
 
 # for each time period
 for at,t in enumerate(df.date.unique()):
-    
+
     # compute total market lending
     agg_dep = np.nansum( df[ (df.date == t) ]['total_deposits'] )
     temp_share = 0
-        
+
     # compute market shares
     if agg_dep > 0:
-        # for each bank 
-        for idx,bank in enumerate(df.RSSD9001.unique()):    
-        
+        # for each bank
+        for idx,bank in enumerate(df.RSSD9001.unique()):
+
             # if loan issuance is positive, divide lending by agg lending variable, record in dataframe
             try:
                 if np.float(df[ (df.date == t) & (df.RSSD9001 == bank)]['total_deposits']) > 0:
-                    
+
                     df.loc[ (df.date == t) & (df.RSSD9001 == bank), 'deposit_market_share'] = 100*np.float(df[ (df.date == t) & (df.RSSD9001 == bank)]['total_deposits'])/agg_dep
                     temp_share = temp_share + np.float(df[ (df.date == t) & (df.RSSD9001 == bank)]['total_deposits'])/agg_dep
             except:
                 df.loc[ (df.date == t) & (df.RSSD9001 == bank), 'deposit_market_share'] = 0
-                
+
     else:
         df.loc[(df.date == t), 'deposit_market_share' ] = 0
-        
+
     excess_market_share.append( 100*(1-temp_share) )
 
 total_deposits = []
@@ -985,7 +985,7 @@ for at,t in enumerate(df.date.unique()):
         dep_spot_rate.append( np.nansum(df[df.date==t]['deposit_expense'])/np.nansum(df[df.date==t]['total_deposits']) )
     except:
         dep_spot_rate.append(0)
-        
+
 plt.figure(2)
 plt.plot(df.date.unique(),dep_spot_rate,lw=3,label='spot')
 plt.title('Deposit Spot Rate (Market Share-Weighted)',fontsize=20)
@@ -1024,8 +1024,8 @@ plt.title('Out-of-Sample Deposit Market Share')
 #   Insurance Products    #
 #                         #
 #-------------------------#
-df['insurance_revenue'] = 0 
-df['insurance_assets'] = df['BHCKC244'] + df['BHCKC248'] 
+df['insurance_revenue'] = 0
+df['insurance_assets'] = df['BHCKC244'] + df['BHCKC248']
 
 # compute quarterly deposit interest expense
 for idx, bank in enumerate( df.RSSD9001.unique() ):
@@ -1040,32 +1040,32 @@ for idx, bank in enumerate( df.RSSD9001.unique() ):
         if at == 0:  # first period observed is 1986 Q3; annualize by multiplying by 4/3
             try:
                 df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'insurance_revenue' ] = np.float( df[ (df.date ==t) & (df.RSSD9001 == bank) ]['BHCKC386' ] +
-                                                                                            df[ (df.date ==t) & (df.RSSD9001 == bank) ]['BHCKC387' ] ) 
+                                                                                            df[ (df.date ==t) & (df.RSSD9001 == bank) ]['BHCKC387' ] )
             except:
-                pass 
-            
+                pass
+
         else:
 
             if quart == 0: # if Q1, annualize by multiplying by 4
 
                 try:
                     df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'insurance_revenue' ] = np.float( df[ (df.date ==t) & (df.RSSD9001 == bank) ]['BHCKC386' ] +
-                                                                                            df[ (df.date ==t) & (df.RSSD9001 == bank) ]['BHCKC387' ] ) 
-                except: 
-                    pass 
-                
+                                                                                            df[ (df.date ==t) & (df.RSSD9001 == bank) ]['BHCKC387' ] )
+                except:
+                    pass
+
             else: # if (Q2,Q3,Q4), compute newly accrued expenses, then multiply by 4
 
                 try:
                     df.loc[ (df.date ==t) & (df.RSSD9001 == bank), 'insurance_revenue' ] =(np.float( df[ (df.date ==t) & (df.RSSD9001 == bank) ]['BHCKC386' ] +
                                                                                             df[ (df.date ==t) & (df.RSSD9001 == bank) ]['BHCKC387' ]  ) -
-                                                                                           np.float( 
+                                                                                           np.float(
                                                                                             df[ (df.date == df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC386' ] +
-                                                                                            df[ (df.date == df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC387' ] 
+                                                                                            df[ (df.date == df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC387' ]
                                                                                                ) )
                 except:
-                    pass 
-                
+                    pass
+
             #if not last quarter of fiscal year
             if quart < 3:
                 quart = quart + 1
@@ -1076,17 +1076,17 @@ df['insurance_price'] = df['insurance_revenue']/df['insurance_assets']
 
 agg_assets = []
 agg_revenue = []
-agg_price = [] 
+agg_price = []
 for at,t in enumerate(df.date.unique()):
-    
+
     agg_assets.append( np.nansum( df[df.date == t]['insurance_assets'] )/(1000*1000) )
-    
+
     agg_revenue.append( np.nansum( df[df.date == t]['insurance_revenue'] )/(1000*1000) )
     try:
         agg_price.append( np.nansum( df[df.date == t]['insurance_revenue'] )/np.nansum( df[df.date == t]['insurance_assets'] ) )
     except:
         agg_price.append(0)
-        
+
 plt.close('all')
 # agg insurance assets
 plt.figure(1)
@@ -1095,7 +1095,7 @@ plt.xlabel('Date',fontsize=15)
 plt.ylabel('Assets ($, Billion)',fontsize=15)
 plt.title('Aggregate Insurance Assets',fontsize=20)
 
-# agg revenues 
+# agg revenues
 plt.figure(2)
 plt.plot(df.date.unique(),agg_revenue,lw=3)
 plt.xlabel('Date',fontsize=15)
@@ -1134,23 +1134,23 @@ df['insurance_market_share'] = 0
 excess_market_share = []
 
 for at,t in enumerate(df.date.unique()):
-    
-    # compute total market 
+
+    # compute total market
     agg_ins_vol = np.float( np.nansum( df[df.date==t]['insurance_assets'] ) )
     temp_share = 0
-    
+
     for idx,bank in enumerate(df.RSSD9001.unique()):
-        
+
         try:
             df.loc[(df.date==t) & (df.RSSD9001==bank), 'insurance_market_share'] = 100*np.float(df[(df.date==t) & (df.RSSD9001==bank)]['insurance_assets'])/agg_ins_vol
             temp_share = temp_share + np.float(df[(df.date==t) & (df.RSSD9001==bank)]['insurance_assets'])/agg_ins_vol
-            
+
         except:
             df.loc[(df.date==t) & (df.RSSD9001==bank), 'insurance_market_share'] = 0
-            
+
     excess_market_share.append( 100*(1-temp_share) )
-    
-    
+
+
 plt.figure(7)
 [plt.plot(df[(df.RSSD9001 == bank)]['date'],df[(df.RSSD9001 == bank)]['insurance_market_share'],lw=2) for idx,bank in enumerate( df.RSSD9001.unique() )]
 plt.xlabel('Date',fontsize=15)
@@ -1164,9 +1164,9 @@ plt.title('Out-of-Sample Insurance Market Share (%)',fontsize=15)
 plt.ylabel('Market Share (%)',fontsize=20)
 
 #------------------#
-#                  # 
+#                  #
 #   Data Output    #
-#                  # 
+#                  #
 #------------------#
 
 # output a refined dataframe
@@ -1182,5 +1182,3 @@ df[['date','RSSD9001','total_assets',
 #   Statistical Analysis    #
 #                           #
 #---------------------------#
-
-
