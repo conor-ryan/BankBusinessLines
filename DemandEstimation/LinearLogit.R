@@ -8,6 +8,23 @@ data = as.data.table(read.csv("Data/frdata_refined.csv"))
 data[,date:=as.Date(date)]
 data[,year:=as.numeric(format(date,"%Y"))]
 
+## Bank Characteristics 
+
+data[,salary_per_asset:=salaries/total_assets]
+data[,premises_per_asset:=premises_cost/total_assets]
+data[,other_per_asset:=other_cost/total_assets]
+data[,total_per_asset:=total_cost/total_assets]
+
+#Drop the banks(quarters) that report 0 assets or 0 costs
+data = data[!is.na(total_assets)&total_assets>0]
+data = data[!is.na(total_cost)&total_cost>0]
+
+## Market Share as Percentage
+data[,deposit_market_share:=deposit_market_share/100]
+data[,consumer_market_share:=consumer_market_share/100]
+data[,commercial_market_share:=commercial_market_share/100]
+data[,insurance_market_share:=insurance_market_share/100]
+
 
 ### By Quarter Quantities
 byQuarter = data[insurance_assets>0,list(total_assets = sum(total_assets,na.rm=TRUE)/1e6,
@@ -37,29 +54,6 @@ firms = sort(unique(firms))
 data = data[RSSD9001%in%firms]
 
 
-#### Merge in Branch Info ####
-
-
-load("Data/bankbranches.Rdata")
-
-### Manually Match IDs that are mismatched due to organizational structure
-
-# 1020340 - BMO Bankcorp (15)
-#  1026632 - Charles Schwab (16)
-# 1037003 - M&T Bank (1)
-# 1078529 - BBVA (1)
-# 1132449 - Citizens Financial (32)
-#  1201934 - TCF Financial (1)
-# 1231968 - BNP Paribas (26)
-# 1245415 - BMO Financial (1)
-# 1249758 - General Electric (14)
-# 1378434 - Mitsubishi Financial (1)
-# 1447376 - USAA (16)
-# 1562176 - AIG (4)
-# 1575569
-
-
-
 #### Merge in Parent ID Mappings
 load("Data/MarketStructure/OrgStructureByQuarter.rData")
 data[,datenum:=year(date)*10000+month(date)*100+30]
@@ -68,83 +62,59 @@ nrow(data)
 data = merge(data,qtr_map,by.x=c("RSSD9001","datenum"),by.y=c("OFFSPRING","quarter"),all.x=TRUE)
 data[is.na(PARENT),PARENT:=RSSD9001]
 data[,datenum:=NULL]
+nrow(data)
 
-branches[,datenum:=YEAR*10000+0330]
-branches = merge(branches,qtr_map,by.x=c("RSSDHCR","datenum"),by.y=c("OFFSPRING","quarter"),all.x=TRUE)
-branches[is.na(PARENT),PARENT:=RSSDHCR]
-branches[,datenum:=NULL]
+## Check Duplicates 
+data[,count:=1]
+data[,count:=sum(count),by=c("RSSD9001","date")]
+data[,sum(count>1)]
 
 
-data = merge(data,branches,by.x=c("year","RSSD9001"),by.y=c("YEAR","RSSDHCR"),all.x=TRUE)
+#### Merge in Branch Info ####
+load("Data/bankbranches.Rdata")
+
+### Manually Match IDs that are mismatched due to organizational structure
+
+# 1020340 - BMO Bankcorp (15/25)
+#  1025608 - First Hawaiian (26/26)
+# 1037003 - M&T Bank (12/52)
+# 1132449 - Citizens Financial (32/52)
+#  1201934 - TCF Financial (2/44)
+# 1245415 - BMO Financial (52/52)
+# 3232316 - HSBC (52/52)
+# 3489594 - 
+
+
+# data = merge(data,branches,by.x=c("year","RSSD9001"),by.y=c("YEAR","RSSDHCR"),all.x=TRUE)
+# data[,PARENT:=PARENT.x]
+# data[,c("PARENT.x","PARENT.y"):=NULL]
 data = merge(data,branches,by.x=c("year","PARENT"),by.y=c("YEAR","PARENT"),all.x=TRUE)
 
 
-test = data[,list(missing=sum(is.na(geo_coverage)),
-                  any_deposits = sum(!is.na(total_deposits&total_deposits>0)),
-                  avg_deposit_share = mean(deposit_market_share,na.rm=TRUE)),
-            by="PARENT"]
-test
-
-data[year>=2008&!is.na(total_deposits)&total_deposits>0,table(PARENT,is.na(geo_coverage))]
-
-avg_share = data[,mean(deposit_market_share,na.rm=TRUE),by="RSSD9001"]
-
-
-load("Data/Branches/AllBranchData.rData")
-
-#
-# #### Average Trends (Quality Check) ####
-# trends = data[,list(total_deposits=sum(total_deposits,na.rm=TRUE),
-#                     consumer_loans=sum(consumer_loans,na.rm=TRUE),
-#                     commercial_loans=sum(commercial_loans,na.rm=TRUE),
-#                     deposit_rate=mean(deposit_rate,na.rm=TRUE),
-#                     consumer_rate=mean(consumer_rate,na.rm=TRUE),
-#                     commericial_rate=mean(commercial_rate,na.rm=TRUE),
-#                     salaries=sum(salaries,na.rm=TRUE),
-#                     premises_cost=sum(premises_cost,na.rm=TRUE),
-#                     other_cost=sum(other_cost,na.rm=TRUE),
-#                     total_cost=sum(total_cost,na.rm=TRUE)),
-#               by="date"]
-# trends[,date:=as.Date(date)]
-#
-# ### Quantity Trends
-# ggplot(trends) +
-#   geom_line(aes(x=date,y=total_deposits,color="Deposits")) +
-#   geom_line(aes(x=date,y=consumer_loans,color="Consumer Loans")) +
-#   geom_line(aes(x=date,y=commercial_loans,color="Commercial Loans"))
-#
-# ### Interest Trends
-# ggplot(trends) +
-#   geom_line(aes(x=date,y=deposit_rate,color="Deposits")) +
-#   geom_line(aes(x=date,y=consumer_rate,color="Consumer Loans")) +
-#   geom_line(aes(x=date,y=commericial_rate,color="Commercial Loans"))
-#
-# ### Cost Trends
-# ggplot(trends) +
-#   geom_line(aes(x=date,y=salaries,color="Salaries")) +
-#   geom_line(aes(x=date,y=premises_cost,color="Premises")) +
-#   geom_line(aes(x=date,y=other_cost,color="Other")) +
-#   geom_line(aes(x=date,y=total_cost,color="Total Cost"))
-#
-#
+# test = data[,list(missing=sum(is.na(geo_coverage)),
+#                   any_deposits = sum(!is.na(total_deposits&total_deposits>0)),
+#                   avg_deposit_share = mean(deposit_market_share,na.rm=TRUE)),
+#             by=c("RSSD9001","PARENT")]
+# test
+# 
+# data[year>=2008&!is.na(total_deposits)&total_deposits>0,table(PARENT,is.na(geo_coverage))]
+# 
+# avg_share = data[,mean(deposit_market_share,na.rm=TRUE),by="RSSD9001"]
+# 
+# 
+# load("Data/Branches/AllBranchData.rData")
 
 
 #### Create Market Shares ####
-## Merge in data on total quantities in each quarter
-market = as.data.table(read.csv("Data/MarketSizeByQuarter.csv"))
-names(market) = c("date","mkt_deposits","mkt_consumer_loans","mkt_commercial_loans")
-data = merge(data,market,by="date",all.x=TRUE)
-
-
-## Compute Market Share
-data[,deposit_share:=total_deposits/mkt_deposits]
-data[,cons_loan_share:=consumer_loans/mkt_consumer_loans]
-data[,comm_loan_share:=commercial_loans/mkt_commercial_loans]
 
 ## Compute Marketshare of the Outside Good
-data[,deposit_s0:=1-sum(deposit_share),by="date"]
-data[,cons_loan_s0:=1-sum(cons_loan_share),by="date"]
-data[,comm_loan_s0:=1-sum(comm_loan_share),by="date"]
+data[is.na(geo_coverage),deposit_market_share:=NA]
+data[insurance_market_share<0.01,insurance_market_share:=NA]
+
+data[,deposit_s0:=1-sum(deposit_market_share,na.rm=TRUE),by="date"]
+data[,cons_loan_s0:=1-sum(consumer_market_share,na.rm=TRUE),by="date"]
+data[,comm_loan_s0:=1-sum(commercial_market_share,na.rm=TRUE),by="date"]
+data[,insurance_s0:=1-sum(insurance_market_share,na.rm=TRUE),by="date"]
 
 
 #### Merge Info on Macro Environment ####
@@ -168,46 +138,61 @@ ffrate = merge(ffrate,quarter_map,by="DATE")
 data = merge(data,ffrate[,c("date_end","FEDFUNDS")],by.x="date",by.y="date_end",all.x=TRUE)
 
 
-#### Naive Demand Estimations ####
-data[,depvar:=log(deposit_share)-log(deposit_s0)]
-summary(data[,lm(depvar~deposit_rate+as.factor(RSSD9001)+as.factor(date))])
+#### Demand Estimation For Deposits #### 
 
-data[,depvar:=log(cons_loan_share)-log(cons_loan_s0)]
-summary(data[,lm(depvar~consumer_rate+as.factor(RSSD9001)+as.factor(date))])
+### Naive 
 
-data[,depvar:=log(comm_loan_share)-log(comm_loan_s0)]
-summary(data[,lm(depvar~commercial_rate+as.factor(RSSD9001)+as.factor(date))])
+data[,depvar:=log(deposit_market_share)-log(deposit_s0)]
+summary(data[,lm(depvar~deposit_rate+as.factor(RSSD9001)+as.factor(date)+branch_count+geo_coverage+salary_per_asset+premises_per_asset)])
 
-#### Normalized Costs ####
-data[,salary_perasset:=salaries/total_assets]
-data[,premises_perasset:=premises_cost/total_assets]
-data[,other_perasset:=other_cost/total_assets]
-data[,total_perasset:=total_cost/total_assets]
-
-#### Instrument for Deposit Rate ####
+## IV
 dep_iv = data[,lm(deposit_rate~as.factor(RSSD9001)*FEDFUNDS)]
 
 data[!is.na(deposit_rate),deposit_rate_iv:=predict(dep_iv)]
 
-data[,depvar:=log(deposit_share)-log(deposit_s0)]
-summary(data[,lm(depvar~deposit_rate+as.factor(RSSD9001)+as.factor(date))])
-summary(data[,lm(depvar~deposit_rate_iv+as.factor(RSSD9001)+as.factor(date))])
+summary(data[,lm(depvar~deposit_rate_iv+as.factor(RSSD9001)+as.factor(date)+branch_count+geo_coverage+salary_per_asset+premises_per_asset)])
+data[,depvar:=NULL]
 
 
-#### Instrument for Consumer Loan Rate ####
-cons_iv = data[,lm(consumer_rate~deposit_rate+salary_perasset+premises_perasset+other_perasset+total_perasset+as.factor(date)+as.factor(RSSD9001))]
+#### Demand Estimation For Consumer Loans #### 
 
-data[!is.na(consumer_rate),consumer_rate_iv:=predict(cons_iv)]
+## Naive
+data[consumer_market_share>0,depvar:=log(consumer_market_share)-log(cons_loan_s0)]
+summary(data[,lm(depvar~consumer_rate+as.factor(RSSD9001)+as.factor(date)+branch_count+geo_coverage+salary_per_asset+premises_per_asset)])
 
-data[,depvar:=log(cons_loan_share)-log(cons_loan_s0)]
-summary(data[,lm(depvar~consumer_rate+as.factor(RSSD9001)+as.factor(date))])
-summary(data[,lm(depvar~consumer_rate_iv+as.factor(RSSD9001)+as.factor(date))])
+## IV
+cons_iv = data[,lm(consumer_rate~deposit_rate+salary_per_asset+premises_per_asset+other_per_asset+total_per_asset+as.factor(date)+as.factor(RSSD9001))]
 
-#### Instrument for Commercial Loan Rate ####
-comm_iv = data[,lm(commercial_rate~deposit_rate+salary_perasset+premises_perasset+other_perasset+total_perasset+as.factor(date)+as.factor(RSSD9001))]
+data[!is.na(consumer_rate)&!is.na(deposit_rate),consumer_rate_iv:=predict(cons_iv)]
 
-data[!is.na(commercial_rate),commercial_rate_iv:=predict(comm_iv)]
+summary(data[,lm(depvar~consumer_rate_iv+as.factor(RSSD9001)+as.factor(date)+branch_count+geo_coverage+salary_per_asset+premises_per_asset)])
+summary(data[,lm(depvar~consumer_rate_iv+as.factor(RSSD9001)+as.factor(date)+salary_per_asset+premises_per_asset)])
+data[,depvar:=NULL]
 
-data[,depvar:=log(comm_loan_share)-log(comm_loan_s0)]
-summary(data[,lm(depvar~commercial_rate+as.factor(RSSD9001)+as.factor(date))])
-summary(data[,lm(depvar~commercial_rate_iv+as.factor(RSSD9001)+as.factor(date))])
+#### Demand Estimation For Commercial Loans #### 
+
+## Naive
+data[commercial_market_share>0,depvar:=log(commercial_market_share)-log(comm_loan_s0)]
+summary(data[,lm(depvar~commercial_rate+as.factor(RSSD9001)+as.factor(date)+branch_count+geo_coverage+salary_per_asset+premises_per_asset)])
+
+## IV
+comm_iv = data[,lm(commercial_rate~deposit_rate+salary_per_asset+premises_per_asset+other_per_asset+total_per_asset+as.factor(date)+as.factor(RSSD9001))]
+
+data[!is.na(commercial_rate)&!is.na(deposit_rate),commercial_rate_iv:=predict(comm_iv)]
+
+summary(data[,lm(depvar~commercial_rate_iv+as.factor(RSSD9001)+as.factor(date)+branch_count+geo_coverage+salary_per_asset+premises_per_asset)])
+summary(data[,lm(depvar~commercial_rate_iv+as.factor(RSSD9001)+as.factor(date)+salary_per_asset+premises_per_asset)])
+data[,depvar:=NULL]
+
+#### Insurance Demand Estimation ####
+data[,depvar:=log(insurance_market_share)-log(insurance_s0)]
+summary(data[,lm(depvar~insurance_price +as.factor(RSSD9001)+as.factor(date)+salary_per_asset+premises_per_asset)])
+
+## IV
+ins_iv = data[!is.na(insurance_market_share),lm(insurance_price~salary_per_asset+premises_per_asset+other_per_asset+total_per_asset+as.factor(date)+as.factor(RSSD9001))]
+
+data[!is.na(insurance_market_share)&!is.na(insurance_price),insurance_price_iv:=predict(ins_iv)]
+
+summary(data[,lm(depvar~insurance_price_iv+as.factor(RSSD9001)+as.factor(date)+branch_count+geo_coverage+salary_per_asset+premises_per_asset)])
+summary(data[,lm(depvar~insurance_price_iv+as.factor(RSSD9001)+as.factor(date)+salary_per_asset+premises_per_asset)])
+data[,depvar:=NULL]

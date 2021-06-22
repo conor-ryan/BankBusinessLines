@@ -37,8 +37,8 @@ names(dfmap) = c("PARENT","OFFSPRING_1","DT_START_last","DT_END_last","linkID_la
 df_temp = copy(df)
 names(df_temp) = paste(names(df_temp),"new",sep="_")
 
-4368883
 
+dfmap = dfmap[!PARENT%in%dfmap$OFFSPRING]
 
 ## Allow 20 levels deep. There are cycles of recursive relationships that prevent it from converging
 while (continuing_chains>0){
@@ -108,6 +108,13 @@ for (qtr in unique(data$datenum)){
   temp[,quarter:=qtr]
   qtr_map = rbind(qtr_map,temp)
 }
+qtr_map = unique(qtr_map)
+
+qtr_map = qtr_map[!OFFSPRING%in%c(2568278)]
+qtr_map = qtr_map[!OFFSPRING==3838857&quarter<20151101]
+qtr_map = qtr_map[!OFFSPRING==3923614&quarter<20131101]
+qtr_map= qtr_map[!(PARENT==2348470&quarter>20180813)]
+
 save(qtr_map,file="Data/MarketStructure/OrgStructureByQuarter.rData")
 
 
