@@ -7,12 +7,23 @@ setwd("G:/Shared drives/BankBusinessLines")
 
 df = as.data.table(read.csv("Data/MarketStructure/CSV_RELATIONSHIPS.CSV"))
 
-## Recursive Ownerships that are real data, but we can probably ignore
-df = df[!(ID_RSSD_OFFSPRING==4906584&X.ID_RSSD_PARENT==4901981)]
+
+
+# ## Recursive Ownerships that are real data, but we can probably ignore
+# df = df[!(ID_RSSD_OFFSPRING==4906584&X.ID_RSSD_PARENT==4901981)]
+
+
+## Check All Recursive Relationships 
+df[,Forward:=paste(X.ID_RSSD_PARENT,ID_RSSD_OFFSPRING,sep="_")]
+df[,Reverse:=paste(ID_RSSD_OFFSPRING,X.ID_RSSD_PARENT,sep="_")]
+df[,rel_check_id:=ID_RSSD_OFFSPRING+X.ID_RSSD_PARENT]
+
+## Delete all recursive relationships, maybe won't lose much.
+
+df = df[!(Forward%in%df$Reverse)]
 
 # Reducing the mapping to only the controlling shares seems to leave out some important links. 
-#df = df[CTRL_IND==1&(PCT_EQUITY>50|PCT_EQUITY_BRACKET%in%c(">50-<80","80-100","100")|PCT_EQUITY_FORMAT=="N/A"),
-        #] # Only Controlling Links
+# df = df[CTRL_IND==1] # Only Controlling Links
 df = unique(df[,c("X.ID_RSSD_PARENT","ID_RSSD_OFFSPRING","DT_START","DT_END")])
 
 names(df) = c("PARENT","OFFSPRING","DT_START","DT_END")
@@ -26,6 +37,10 @@ names(dfmap) = c("PARENT","OFFSPRING_1","DT_START_last","DT_END_last","linkID_la
 df_temp = copy(df)
 names(df_temp) = paste(names(df_temp),"new",sep="_")
 
+4368883
+
+
+## Allow 20 levels deep. There are cycles of recursive relationships that prevent it from converging
 while (continuing_chains>0){
   
   
@@ -34,13 +49,25 @@ while (continuing_chains>0){
   dfmap[DT_END_new>DT_END_last,DT_END_new:=DT_END_last]
   dfmap[DT_START_new<DT_START_last,DT_START_new:=DT_START_last]
   dfmap[!is.na(OFFSPRING_new),linkage_new:= paste(linkID_last,linkID_new,sep="_")]
+  
+  ## Drop links that are going to be added in the next merge
   if (itr>1){
     dfmap = dfmap[!(!is.na(linkage_last) & linkage_last%in%linkage_new)]
   }
   
-  continuing_chains = nrow(dfmap[!is.na(OFFSPRING_new)])
-  print(paste(continuing_chains,"continuing matches on iteration",itr))
   
+  ## Drop links that are recursive
+  if (itr>=3){
+  for (i in (itr-1):1){
+    dfmap[,check:=.SD,.SDcol=paste("OFFSPRING",i,sep="_")]
+    dfmap = dfmap[! (!is.na(OFFSPRING_new) & OFFSPRING_new==check)]
+  }
+  }
+  
+  continuing_chains = nrow(dfmap[!is.na(OFFSPRING_new)])
+  unique_remaining_offspring = length(dfmap[!is.na(OFFSPRING_new),unique(OFFSPRING_new)])
+  print(paste(continuing_chains,"continuing matches on iteration",itr))
+  print(paste(unique_remaining_offspring,"continuing offspring on iteration",itr))
   
   
   names(dfmap) = gsub("_last",paste("_",itr,sep=""),names(dfmap))
@@ -49,8 +76,10 @@ while (continuing_chains>0){
   names(dfmap) = gsub("OFFSPRING_last",paste("OFFSPRING",itr,sep="_"),names(dfmap))
   
 }
+dfmap[,c(paste("OFFSPRING",itr,sep="_")):=NULL]
+
 itr = itr-1
-dfmap[,c("OFFSPRING_16","DT_START_last","DT_END_last","linkID_last","linkage_last"):=NULL]
+dfmap[,c("DT_START_last","DT_END_last","linkID_last","linkage_last"):=NULL]
 print(itr)
 #### Collapse mapping down to map between lowest offspring and highest parent. 
 map_cond = NULL
