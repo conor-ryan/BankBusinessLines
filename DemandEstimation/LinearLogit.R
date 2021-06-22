@@ -9,7 +9,7 @@ data[,date:=as.Date(date)]
 data[,year:=as.numeric(format(date,"%Y"))]
 
 
-### By Quarter Quantities 
+### By Quarter Quantities
 byQuarter = data[insurance_assets>0,list(total_assets = sum(total_assets,na.rm=TRUE)/1e6,
                        total_deposits=sum(total_deposits,na.rm=TRUE)/1e6,
                        new_cons_loans=sum(new_consumer_loans,na.rm=TRUE)/1e6,
@@ -83,7 +83,7 @@ test = data[,list(missing=sum(is.na(geo_coverage)),
                   any_deposits = sum(!is.na(total_deposits&total_deposits>0)),
                   avg_deposit_share = mean(deposit_market_share,na.rm=TRUE)),
             by="PARENT"]
-test 
+test
 
 data[year>=2008&!is.na(total_deposits)&total_deposits>0,table(PARENT,is.na(geo_coverage))]
 
@@ -184,7 +184,7 @@ data[,premises_perasset:=premises_cost/total_assets]
 data[,other_perasset:=other_cost/total_assets]
 data[,total_perasset:=total_cost/total_assets]
 
-#### Instrument for Deposit Rate #### 
+#### Instrument for Deposit Rate ####
 dep_iv = data[,lm(deposit_rate~as.factor(RSSD9001)*FEDFUNDS)]
 
 data[!is.na(deposit_rate),deposit_rate_iv:=predict(dep_iv)]
@@ -194,7 +194,7 @@ summary(data[,lm(depvar~deposit_rate+as.factor(RSSD9001)+as.factor(date))])
 summary(data[,lm(depvar~deposit_rate_iv+as.factor(RSSD9001)+as.factor(date))])
 
 
-#### Instrument for Consumer Loan Rate #### 
+#### Instrument for Consumer Loan Rate ####
 cons_iv = data[,lm(consumer_rate~deposit_rate+salary_perasset+premises_perasset+other_perasset+total_perasset+as.factor(date)+as.factor(RSSD9001))]
 
 data[!is.na(consumer_rate),consumer_rate_iv:=predict(cons_iv)]
@@ -203,7 +203,7 @@ data[,depvar:=log(cons_loan_share)-log(cons_loan_s0)]
 summary(data[,lm(depvar~consumer_rate+as.factor(RSSD9001)+as.factor(date))])
 summary(data[,lm(depvar~consumer_rate_iv+as.factor(RSSD9001)+as.factor(date))])
 
-#### Instrument for Commercial Loan Rate #### 
+#### Instrument for Commercial Loan Rate ####
 comm_iv = data[,lm(commercial_rate~deposit_rate+salary_perasset+premises_perasset+other_perasset+total_perasset+as.factor(date)+as.factor(RSSD9001))]
 
 data[!is.na(commercial_rate),commercial_rate_iv:=predict(comm_iv)]
@@ -211,4 +211,3 @@ data[!is.na(commercial_rate),commercial_rate_iv:=predict(comm_iv)]
 data[,depvar:=log(comm_loan_share)-log(comm_loan_s0)]
 summary(data[,lm(depvar~commercial_rate+as.factor(RSSD9001)+as.factor(date))])
 summary(data[,lm(depvar~commercial_rate_iv+as.factor(RSSD9001)+as.factor(date))])
-

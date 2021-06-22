@@ -302,13 +302,9 @@ df['consumer_market_share'] = 0
 
 # for each time period
 for at,t in enumerate(df.date.unique()):
-<<<<<<< HEAD
 
     # compute total market lending
     temp_agg_lend = np.float( market_df[ market_df.Date == t ]['Consumer_Loan_Market'] )
-=======
-
->>>>>>> 303f3b94c5b0b92592bea54e9000024c837b01b4
     temp_share = 0
 
     # compute market shares
@@ -742,21 +738,8 @@ for at,t in enumerate(df.date.unique()):
 #   Insurance Products    #
 #                         #
 #-------------------------#
-<<<<<<< HEAD
 df['insurance_revenue'] = 0
 df['insurance_assets'] = df['BHCKC244'] + df['BHCKC248']
-=======
-print()
-print()
-print()
-print('Insurance Business Line')
-print()
-print()
-print()
-
-df['insurance_revenue'] = 0
-df['insurance_assets'] = df['BHCKC244'] + df['BHCKC248']
->>>>>>> 303f3b94c5b0b92592bea54e9000024c837b01b4
 
 # compute quarterly deposit interest expense
 for idx, bank in enumerate( df.RSSD9001.unique() ):
