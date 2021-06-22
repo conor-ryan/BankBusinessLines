@@ -9,6 +9,34 @@ data[,date:=as.Date(date)]
 data[,year:=as.numeric(format(date,"%Y"))]
 
 
+### By Quarter Quantities 
+byQuarter = data[insurance_assets>0,list(total_assets = sum(total_assets,na.rm=TRUE)/1e6,
+                       total_deposits=sum(total_deposits,na.rm=TRUE)/1e6,
+                       new_cons_loans=sum(new_consumer_loans,na.rm=TRUE)/1e6,
+                       new_comm_loans=sum(new_commercial_loans,na.rm=TRUE)/1e6,
+                       insured_assets=sum(insurance_assets,na.rm=TRUE)/1e6),
+                 by=c("date")]
+
+
+
+#### Selection: Top 20, in any market in any quarter #####
+firms = c()
+for (var in c("deposit_market_share","consumer_market_share","commercial_market_share","insurance_market_share")){
+  data[,share:=.SD,.SDcol=var]
+  data[,temp_rank:=rank(-share,ties.method="average"),by="date"]
+  firms_prod = data[share>0&temp_rank<=20,unique(RSSD9001)]
+  firms = c(firms,firms_prod)
+  data[,temp_rank:=NULL]
+  data[,share:=NULL]
+}
+firms = sort(unique(firms))
+
+
+
+
+data = data[RSSD9001%in%firms]
+
+
 #### Merge in Branch Info ####
 
 
@@ -16,22 +44,21 @@ load("Data/bankbranches.Rdata")
 
 ### Manually Match IDs that are mismatched due to organizational structure
 
-# branches[RSSDHCR==1238565,RSSDHCR:=3606542] # TD Bank
-# branches[RSSDHCR%in%c(1857108),RSSDHCR:=3232316] # HSBC
-# branches[RSSDHCR%in%c(1231333),RSSDHCR:=1245415] # BMO
+# 1020340 - BMO Bankcorp (15)
+#  1026632 - Charles Schwab (16)
+# 1037003 - M&T Bank (1)
+# 1078529 - BBVA (1)
+# 1132449 - Citizens Financial (32)
+#  1201934 - TCF Financial (1)
+# 1231968 - BNP Paribas (26)
+# 1245415 - BMO Financial (1)
+# 1249758 - General Electric (14)
+# 1378434 - Mitsubishi Financial (1)
+# 1447376 - USAA (16)
+# 1562176 - AIG (4)
+# 1575569
 
-# branches[RSSDHCR%in%c(1245796,3833526),RSSDHCR:=1132449] # Citizens 
-# branches[RSSDHCR%in%c(1048184,2309912),RSSDHCR:=1026632] # Charles Schwab
-# branches[RSSDHCR%in%c(),RSSDHCR:=1447376] # United Services Auto
-# branches[RSSDHCR%in%c(),RSSDHCR:=3833526] # Royal Bank of Scotland
-# branches[RSSDHCR==4368883,RSSDHCR:=2162966] #Morgan Stanley 
 
-
-
-# branches[RSSDHCR%in%c(),RSSDHCR:=1951350] # Citi
-# branches[RSSDHCR%in%c(),RSSDHCR:=2277860] # Capital One
-# branches[RSSDHCR%in%c(),RSSDHCR:=3587146] # BNY Mellon
-# 
 
 #### Merge in Parent ID Mappings
 load("Data/MarketStructure/OrgStructureByQuarter.rData")
@@ -48,8 +75,19 @@ branches[is.na(PARENT),PARENT:=RSSDHCR]
 branches[,datenum:=NULL]
 
 
+data = merge(data,branches,by.x=c("year","RSSD9001"),by.y=c("YEAR","RSSDHCR"),all.x=TRUE)
 data = merge(data,branches,by.x=c("year","PARENT"),by.y=c("YEAR","PARENT"),all.x=TRUE)
+
+
+test = data[,list(missing=sum(is.na(geo_coverage)),
+                  any_deposits = sum(!is.na(total_deposits&total_deposits>0)),
+                  avg_deposit_share = mean(deposit_market_share,na.rm=TRUE)),
+            by="PARENT"]
+test 
+
 data[year>=2008&!is.na(total_deposits)&total_deposits>0,table(PARENT,is.na(geo_coverage))]
+
+avg_share = data[,mean(deposit_market_share,na.rm=TRUE),by="RSSD9001"]
 
 
 load("Data/Branches/AllBranchData.rData")
