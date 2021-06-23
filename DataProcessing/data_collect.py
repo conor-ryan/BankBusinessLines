@@ -67,7 +67,10 @@ bhck = [
         '1797','5367','5368',
 
         # insurance-related items
-        'B988','C244','C248'
+        'B988','C244','C248',
+        
+        # securities underwriting, broker-dealer balances
+        '3817', 'C252','8765','A127','8726'
         ]
 
 bhcb = [

@@ -846,11 +846,59 @@ print(100*(1-it/len(df.RSSD9001.unique())),'% of FRY9 banks not included in FRY1
 # find FRY9 variables which correlated with (i) payments, (ii) undrwriting and (iii)
 #   custody accounts, or assume all other banks have zero values in these areas.  
 
+# look at FRY9 quantities correlated with FRY15 underwriting and payments activity
+df_corr = df15[[ 'date','id','underwriting','payments' ]]
 
+df_corr['securities_underwriting'] = np.nan
+df_corr['broker_dealer'] =  np.nan
+df_corr['spot_forex'] =  np.nan
+df_corr['deriv_forex_other'] = np.nan
+df_corr['deriv_forex_trade'] =  np.nan
 
-=======
->>>>>>> ebdb38f3d6b79e0dd68a9c6e90d4bd0334fb4773
+for idx,bank in enumerate(df_corr.id.unique()):
+    print('bank number',idx,'out of',len(df_corr.id.unique()))
+    
+    for at,t in enumerate(df_corr.date.unique()):
+    
+        try:
+            df_corr.loc[ (df_corr.id == bank) & (df_corr.date == t), 'securities_underwriting' ] = np.float(df[ (df.RSSD9001 == bank) & (df.date == t)]['BHCK3817' ])
+        except:
+            pass
+        try:
+            df_corr.loc[ (df_corr.id == bank) & (df_corr.date == t), 'broker_dealer' ] = np.float(df[ (df.RSSD9001 == bank) & (df.date == t)]['BHCKC252' ])
+        except:
+            pass
+        try:
+            df_corr.loc[ (df_corr.id == bank) & (df_corr.date == t), 'spot_forex' ] = np.float(df[ (df.RSSD9001 == bank) & (df.date == t)]['BHCK8765' ])
+        except:
+            pass
+        try:
+            df_corr.loc[ (df_corr.id == bank) & (df_corr.date == t), 'deriv_forex_other' ] = np.float(df[ (df.RSSD9001 == bank) & (df.date == t)]['BHCK8726' ])
+        except:
+            pass
+        try:
+            df_corr.loc[ (df_corr.id == bank) & (df_corr.date == t), 'deriv_forex_trade' ] = np.float(df[ (df.RSSD9001 == bank) & (df.date == t)]['BHCKA127' ])
+        except:
+            pass
+        
+# look at pairwise correlations
+print('investment bank correlations')
+df_corr[['underwriting','securities_underwriting','broker_dealer']].corr()
 
+print('payments activity correlations')
+df_corr[['payments','spot_forex','deriv_forex_other','deriv_forex_trade']].corr()
+
+# look a FE panel regression 
+plt.close('all')
+[plt.plot(df_corr[df_corr.id == bank]['date'],df_corr[df_corr.id == bank]['securities_underwriting']) for idx,bank in enumerate(df_corr.id.unique())]
+
+agg = []
+for at,t in enumerate(df.date.unique()):
+    agg.append( np.nansum( df[df.date==t]['BHCKC252'] )/(1000*1000) )
+
+plt.close()
+plt.plot(df.date.unique(),agg)  
+  
 #------------------#
 #                  #
 #   Data Output    #
