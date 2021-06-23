@@ -10,6 +10,7 @@ plt.style.use('seaborn')
 
 #Import dataframe
 #os.chdir('/home/pando004/Desktop/BankData/FRY9')
+#df = pd.read_csv('frdata.csv')
 os.chdir('G:/Shared drives/BankBusinessLines')
 df = pd.read_csv('Data/frdata.csv')
 
@@ -304,7 +305,6 @@ df['consumer_market_share'] = 0
 for at,t in enumerate(df.date.unique()):
 
     # compute total market lending
-    temp_agg_lend = np.float( market_df[ market_df.Date == t ]['Consumer_Loan_Market'] )
     temp_share = 0
 
     # compute market shares
@@ -810,7 +810,6 @@ for at,t in enumerate(df.date.unique()):
 
         except:
             df.loc[(df.date==t) & (df.RSSD9001==bank), 'insurance_market_share'] = 0
-<<<<<<< HEAD
     
 #-------------------------------#
 #                               #
@@ -827,10 +826,15 @@ print()
 
 # merge FRY15 data with the baseline dataset from FRY9
 #os.chdir('/home/pando004/Desktop/BankData/FRY15')
+#df15 = pd.read_csv('fr15data.csv')
 df15 = pd.read_csv('Data/fr15data.csv')
 
 df15['date'] = df15['date'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d'))
 df15 = df15.sort_values(by=['date'])
+
+# drop 2015 Q4 observations 
+df15 = df15[ ~(df15['date'] <= df15.date.unique()[0] ) ]
+
 
 # collect number of unique IDs in FRY15 data, see how many match with FRY9
 fry15_ids = df15.id.unique()         
@@ -842,6 +846,103 @@ for at,idx in enumerate(df15.id.unique()):
 print(100*it/len(fry15_ids),'% of FRY15 banks in FRY9 dataset')
 print()
 print(100*(1-it/len(df.RSSD9001.unique())),'% of FRY9 banks not included in FRY15 reports')
+
+
+# compute investment bank quantity, revenue, price, market share, total market volume
+df_ibank = df15[['date','id','underwriting']]
+
+df_ibank['investment_quantity'] = df_ibank['underwriting']
+df_ibank['investment_revenue'] = np.nan
+df_ibank['investment_price'] = np.nan
+df_ibank['investment_market_share'] = np.nan 
+df_ibank['total_assets'] = np.nan
+Investment_Market = [] 
+
+# compute total volume of market
+for at,t in enumerate(df_ibank.date.unique()):
+    Investment_Market.append( np.nansum( df_ibank[df_ibank.date == t]['investment_quantity'] ) )
+   
+for idx,bank in enumerate(df_ibank.id.unique()):
+    # first quarter is 2016 Q2
+    quart = 1
+    
+    for at,t in enumerate(df_ibank.date.unique()):
+        if at == 0: 
+            # investment bank revenues
+            try:
+                df_ibank.loc[ (df_ibank.id == bank) & (df_ibank.date == t), 'investment_revenue' ] = (1/2)*np.float(df[ (df.RSSD9001 == bank) & (df.date == t)]['BHCKC888' ])
+            except:
+                pass
+            
+        else:
+            
+            if quart ==0:
+                # investment bank revenues
+                try:
+                    df_ibank.loc[ (df_ibank.id == bank) & (df_ibank.date == t), 'investment_revenue' ] = np.float(df[ (df.RSSD9001 == bank) & (df.date == t)]['BHCKC888' ])
+                except:
+                    pass
+            else:
+                # investment bank revenues
+                try:
+                    df_ibank.loc[ (df_ibank.id == bank) & (df_ibank.date == t), 'investment_revenue' ] = np.float(df[ (df.RSSD9001 == bank) & (df.date == t)]['BHCKC888' ]) - np.float(df[ (df.RSSD9001 == bank) & (df.date == df15.date.unique()[at-1])]['BHCKC888' ])
+                except:
+                    pass
+            
+
+        # investment bank price
+        try:
+            df_ibank.loc[ (df_ibank.id == bank) & (df_ibank.date == t), 'investment_price' ] = np.float( df_ibank[ (df_ibank.id == bank) & (df_ibank.date == t)][ 'investment_revenue' ] )/np.float( df_ibank[ (df_ibank.id == bank) & (df_ibank.date == t)][ 'investment_quantity' ] )
+        except:
+            pass
+
+        # investment bank market share
+        try:
+            df_ibank.loc[ (df_ibank.id == bank) & (df_ibank.date == t), 'investment_market_share' ] = np.float( df_ibank[ (df_ibank.id == bank) & (df_ibank.date == t)][ 'investment_quantity' ] )/np.float( Investment_Market[at] )
+        except:
+            pass
+        
+        try:
+            df_ibank.loc[ (df_ibank.id == bank) & (df_ibank.date == t), 'total_assets' ] = np.float( df[ (df.RSSD9001 == bank) & (df.date == t)][ 'total_assets' ] )
+        except:
+            pass
+        
+        #if not last quarter of fiscal year
+        if quart < 3:
+            quart = quart + 1
+        else:
+            quart = 0
+        
+        
+plt.close('all')
+plt.figure(1)
+plt.plot(df_ibank.date.unique(),Investment_Market)
+plt.title('total market volume')
+
+plt.figure(2)
+[plt.plot(df_ibank[ df_ibank.id == bank]['date'],df_ibank[ df_ibank.id == bank]['investment_revenue']/(1000*1000)) for idx,bank in enumerate(df_ibank.id.unique())]
+plt.title('bank-level revenues')
+plt.ylabel('$ Billion')
+
+plt.figure(3)
+[plt.plot(df_ibank[ df_ibank.id == bank]['date'],df_ibank[ df_ibank.id == bank]['investment_price']) for idx,bank in enumerate(df_ibank.id.unique())]
+plt.title('bank-level prices')
+
+plt.figure(4)
+[plt.plot(df_ibank[ df_ibank.id == bank]['date'],df_ibank[ df_ibank.id == bank]['investment_market_share']) for idx,bank in enumerate(df_ibank.id.unique())]
+plt.title('Market Shares')
+
+df_ibank[['date','id','total_assets',
+    'investment_price','investment_market_share','investment_quantity']].to_csv('Data/investment_refined.csv')
+
+# export total market volumes
+test = pd.DataFrame({ 'date':df_ibank.date.unique(),
+                      'Investment_Market':Investment_Market})
+test.to_csv('Data/InvestmentMarketSizeByQuarter.csv')
+
+
+
+
 
 # find FRY9 variables which correlated with (i) payments, (ii) undrwriting and (iii)
 #   custody accounts, or assume all other banks have zero values in these areas.  
