@@ -1,0 +1,209 @@
+rm(list=ls())
+library(data.table)
+library(ggplot2)
+library(stargazer)
+setwd("G:/Shared drives/BankBusinessLines")
+
+#### Read in Data ####
+data = as.data.table(read.csv("Data/frdata_refined.csv"))
+data[,date:=as.Date(date)]
+data[,year:=as.numeric(format(date,"%Y"))]
+data[,X:=NULL]
+
+ibanks = as.data.table(read.csv("Data/investment_refined.csv"))
+ibanks[,date:=as.Date(date)]
+ibanks = ibanks[date!="2021-03-31"]
+ibanks[,X:=NULL]
+
+
+data = merge(data,ibanks,by.x=c("date","RSSD9001"),by.y=c("date","id"),all=TRUE)
+data[,total_assets:=total_assets.x]
+data[,c("total_assets.y","total_assets.x"):=NULL]
+
+
+## Bank Characteristics 
+
+data[,salary_per_asset:=salaries/total_assets]
+data[,premises_per_asset:=premises_cost/total_assets]
+data[,other_per_asset:=other_cost/total_assets]
+data[,total_per_asset:=total_cost/total_assets]
+
+data[,insurance_price:=insurance_price*100]
+data[,investment_price:=investment_price*100]
+
+#Drop the banks(quarters) that report 0 assets or 0 costs
+data = data[!is.na(total_assets)&total_assets>0]
+data = data[!is.na(total_cost)&total_cost>0]
+
+## Market Share as Percentage
+data[,deposit_market_share:=deposit_market_share/100]
+data[,consumer_market_share:=consumer_market_share/100]
+data[,commercial_market_share:=commercial_market_share/100]
+data[,insurance_market_share:=insurance_market_share/100]
+
+
+### By Quarter Quantities
+byQuarter = data[insurance_assets>0,list(total_assets = sum(total_assets,na.rm=TRUE)/1e6,
+                                         total_deposits=sum(total_deposits,na.rm=TRUE)/1e6,
+                                         new_cons_loans=sum(new_consumer_loans,na.rm=TRUE)/1e6,
+                                         new_comm_loans=sum(new_commercial_loans,na.rm=TRUE)/1e6,
+                                         insured_assets=sum(insurance_assets,na.rm=TRUE)/1e6),
+                 by=c("date")]
+
+
+
+#### Selection: Top 20, in any market in any quarter #####
+firms = c()
+for (var in c("deposit_market_share","consumer_market_share","commercial_market_share","insurance_market_share","investment_market_share")){
+  data[,share:=.SD,.SDcol=var]
+  data[,temp_rank:=rank(-share,ties.method="average"),by="date"]
+  firms_prod = data[share>0&temp_rank<=20,unique(RSSD9001)]
+  firms = c(firms,firms_prod)
+  data[,temp_rank:=NULL]
+  data[,share:=NULL]
+}
+firms = sort(unique(firms))
+
+
+data = data[RSSD9001%in%firms]
+
+
+#### Merge in Parent ID Mappings
+load("Data/MarketStructure/OrgStructureByQuarter.rData")
+data[,datenum:=year(date)*10000+month(date)*100+30]
+nrow(data)
+
+data = merge(data,qtr_map,by.x=c("RSSD9001","datenum"),by.y=c("OFFSPRING","quarter"),all.x=TRUE)
+data[is.na(PARENT),PARENT:=RSSD9001]
+data[,datenum:=NULL]
+nrow(data)
+
+## Check Duplicates 
+data[,count:=1]
+data[,count:=sum(count),by=c("RSSD9001","date")]
+data[,sum(count>1)]
+
+
+#### Merge in Branch Info ####
+load("Data/bankbranches.Rdata")
+
+### Manually Match IDs that are mismatched due to organizational structure
+
+# 1020340 - BMO Bankcorp (15/25)
+#  1025608 - First Hawaiian (26/26)
+# 1037003 - M&T Bank (12/52)
+# 1132449 - Citizens Financial (32/52)
+#  1201934 - TCF Financial (2/44)
+# 1245415 - BMO Financial (52/52)
+# 3232316 - HSBC (52/52)
+# 3489594 - 
+
+
+# data = merge(data,branches,by.x=c("year","RSSD9001"),by.y=c("YEAR","RSSDHCR"),all.x=TRUE)
+# data[,PARENT:=PARENT.x]
+# data[,c("PARENT.x","PARENT.y"):=NULL]
+data = merge(data,branches,by.x=c("year","PARENT"),by.y=c("YEAR","PARENT"),all.x=TRUE)
+
+
+# test = data[,list(missing=sum(is.na(geo_coverage)),
+#                   any_deposits = sum(!is.na(total_deposits&total_deposits>0)),
+#                   avg_deposit_share = mean(deposit_market_share,na.rm=TRUE)),
+#             by=c("RSSD9001","PARENT")]
+# test
+# 
+# data[year>=2008&!is.na(total_deposits)&total_deposits>0,table(PARENT,is.na(geo_coverage))]
+# 
+# avg_share = data[,mean(deposit_market_share,na.rm=TRUE),by="RSSD9001"]
+# 
+# 
+# load("Data/Branches/AllBranchData.rData")
+
+
+#### Create Market Shares ####
+
+## Compute Marketshare of the Outside Good
+# data[is.na(geo_coverage),deposit_market_share:=NA]
+# data[insurance_market_share<0.005,insurance_market_share:=NA]
+# 
+# data[,deposit_s0:=1-sum(deposit_market_share,na.rm=TRUE),by="date"]
+# data[,cons_loan_s0:=1-sum(consumer_market_share,na.rm=TRUE),by="date"]
+# data[,comm_loan_s0:=1-sum(commercial_market_share,na.rm=TRUE),by="date"]
+# data[,insurance_s0:=1-sum(insurance_market_share,na.rm=TRUE),by="date"]
+
+
+#### Merge Info on Macro Environment ####
+ffrate = as.data.table(read.csv("Data/OtherData/FEDFUNDS.csv"))
+ffrate[,FEDFUNDS:=as.numeric(as.character(FEDFUNDS))]
+ffrate[,DATE:=as.Date(DATE)]
+
+## Need to convert beginning of quarter dates to end of quarter dates
+quarter_map = ffrate[,"DATE"]
+setkey(quarter_map,DATE)
+quarter_map[,index:=1:nrow(quarter_map)]
+quarter_ends = copy(quarter_map)
+quarter_ends[,index:=index-1]
+names(quarter_ends) = c("date_end","index_end")
+quarter_map = merge(quarter_map,quarter_ends,by.x="index",by.y="index_end")
+quarter_map[,date_end:=date_end-1]
+quarter_map[,index:=NULL]
+
+## Merge FF rate data into main data
+ffrate = merge(ffrate,quarter_map,by="DATE")
+data = merge(data,ffrate[,c("date_end","FEDFUNDS")],by.x="date",by.y="date_end",all.x=TRUE)
+
+
+#### Some additional Variable Edits ####
+data[,bankFactor:=as.factor(RSSD9001)]
+data[,dateFactor:=as.factor(date)]
+
+
+save(data,file="Data/FullSample.RData")
+write.csv(data,file="Data/FullSample.csv")
+
+data[,r_dep:=deposit_rate]
+data[,r_cons:=consumer_rate]
+data[,r_comm:=commercial_rate]
+data[,p_inv:=investment_price]
+data[,p_ins:=insurance_price]
+
+data[,q_dep:=total_deposits]
+data[,q_cons:=new_consumer_loans]
+data[,q_comm:=new_commercial_loans]
+data[,q_inv:=investment_quantity]
+data[,q_ins:=insurance_assets]
+
+data[,s_dep:=deposit_market_share]
+data[,s_cons:=consumer_market_share]
+data[,s_comm:=commercial_market_share]
+data[,s_inv:=investment_market_share]
+data[,s_ins:=insurance_market_share]
+
+gmm_sample = data[date>"2016-06-01",.SD,.SDcols = c("date","RSSD9001","total_cost",names(data)[grepl("^(r|p|q|s)_",names(data))] )]
+
+for (var in c("dep","cons","comm","inv","ins")){
+  qvar = paste("q",var,sep="_")
+  svar = paste("s",var,sep="_")
+  rvar = paste("r",var,sep="_")
+  pvar = paste("p",var,sep="_")
+  gmm_sample[,temp:=.SD,.SDcol=qvar]
+  gmm_sample[is.na(temp),c(qvar):=0]
+  gmm_sample[is.na(temp),c(svar):=0]
+  
+  if (var%in%c("inv","ins")){
+    gmm_sample[is.na(temp)|temp==0,c(pvar):=0]
+  }else{
+    gmm_sample[is.na(temp)|temp==0,c(rvar):=0]
+  }
+  gmm_sample[,temp:=NULL]
+}
+
+## Drop a few observations where insurance price isn't defined. Why isn't it defined? Also an issue with consumer rates
+gmm_sample = gmm_sample[!is.na(p_ins)&!is.na(r_cons)]
+
+
+## Drop banks that don't have any deposits. Going to need to figure out how they fit in.
+gmm_sample = gmm_sample[q_dep>0]
+
+
+save(gmm_sample,file="Data/GMMSample.RData")
+write.csv(gmm_sample,file="Data/GMMSample.csv",row.names=FALSE)
