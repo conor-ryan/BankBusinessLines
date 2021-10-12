@@ -10,7 +10,7 @@ def per_period_revenue(
 
 ## Equity Ratio Constraint
 def equity_constraint(L,q_dep,q_cons,q_comm,e):
-    val = L + q_cons + q_comm - q_dep - (1-e)*(L + q_cons + q_comm)
+    val = (1-e)*(L + q_cons + q_comm) - q_dep
     return val
 
 ## Implied Marginal Costs

@@ -178,7 +178,14 @@ data[,s_comm:=commercial_market_share]
 data[,s_inv:=investment_market_share]
 data[,s_ins:=insurance_market_share]
 
-gmm_sample = data[date>"2016-06-01",.SD,.SDcols = c("date","RSSD9001","total_cost",names(data)[grepl("^(r|p|q|s)_",names(data))] )]
+covariates = c("bankFactor","dateFactor","branch_count","geo_coverage","salary_per_asset","premises_per_asset")
+instruments = c("FEDFUNDS")
+gmm_sample = data[date>"2016-06-01",.SD,.SDcols = c("date","RSSD9001","total_cost",names(data)[grepl("^(r|p|q|s)_",names(data))],covariates,instruments)]
+
+## Need to verify that this assumption is okay 
+gmm_sample[is.na(branch_count),branch_count:=0]
+gmm_sample[is.na(geo_coverage),geo_coverage:=0]
+
 
 for (var in c("dep","cons","comm","inv","ins")){
   qvar = paste("q",var,sep="_")
@@ -204,6 +211,54 @@ gmm_sample = gmm_sample[!is.na(p_ins)&!is.na(r_cons)]
 ## Drop banks that don't have any deposits. Going to need to figure out how they fit in.
 gmm_sample = gmm_sample[q_dep>0]
 
+## Create Outside option Share for Deposits
+gmm_sample[,s_dep_0:=1-sum(s_dep),by="date"]
+
+### Set up for Regression
+gmm_sample[,bankFactor:=as.character(RSSD9001)]
+gmm_sample[,dateFactor:=as.character(date)]
+
+# Exogenous Covariates
+X = model.matrix(~bankFactor+dateFactor+branch_count+geo_coverage+salary_per_asset+premises_per_asset,data=gmm_sample)
+test = solve(t(X)%*%X)
+
+
+
+
+# Instruments
+Z = model.matrix(~-1+bankFactor*FEDFUNDS+dateFactor+branch_count+geo_coverage+salary_per_asset+premises_per_asset,data=gmm_sample)
+C = cor(Z)
+diag(C) = 0.0
+which(C>0.99,arr.ind=TRUE)
+
+Z = Z[,-which(colnames(Z)%in%c("bankFactor1032473:FEDFUNDS","bankFactor2648693:FEDFUNDS","dateFactor2020-12-31"))] # Drop fixed effects for single period banks
+test = solve(t(Z)%*%Z)
+
+## Check regression equation
+Y = gmm_sample[,r_dep]
+# beta = solve(t(Z)%*%Z)%*%t(Y%*%Z)
+# residuals = Y - Z%*%beta
+
+# ## IV Solution for Simulation Testing
+# Y = gmm_sample[,r_dep]
+# Sxy = Y%*%Z
+# Sxz = t(Z)%*%X
+# Szz = t(Z)%*%Z
+# 
+# beta = solve(t(Sxz)%*%Sxz)
+# 
+# dep_iv = gmm_sample[,lm(r_dep~FEDFUNDS + FEDFUNDS*bankFactor)]
+# gmm_sample[,deposit_rate_iv:=predict(dep_iv)]
+# dep_res = gmm_sample[,lm(log(s_dep)~deposit_rate_iv+bankFactor+dateFactor+branch_count+geo_coverage+salary_per_asset+premises_per_asset)]
+# summary(dep_res)
+# 
+# ## IV Moments at Solution
+# mom = t(dep_res$residuals%*%Z)
+
+gmm_sample[,c(covariates,instruments,"deposit_rate_iv"):=NULL]
+
 
 save(gmm_sample,file="Data/GMMSample.RData")
 write.csv(gmm_sample,file="Data/GMMSample.csv",row.names=FALSE)
+write.csv(X,file="Data/ExogenousDemandCovariates.csv",row.names=FALSE)
+write.csv(Z,file="Data/DemandInstruments.csv",row.names=FALSE)
