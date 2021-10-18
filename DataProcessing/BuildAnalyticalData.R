@@ -219,7 +219,7 @@ gmm_sample[,bankFactor:=as.character(RSSD9001)]
 gmm_sample[,dateFactor:=as.character(date)]
 
 # Exogenous Covariates
-X = model.matrix(~bankFactor+dateFactor+branch_count+geo_coverage+salary_per_asset+premises_per_asset,data=gmm_sample)
+X = model.matrix(~r_dep+bankFactor+dateFactor+branch_count+geo_coverage+salary_per_asset+premises_per_asset,data=gmm_sample)
 test = solve(t(X)%*%X)
 
 
@@ -240,17 +240,18 @@ Y = gmm_sample[,r_dep]
 # residuals = Y - Z%*%beta
 
 # ## IV Solution for Simulation Testing
-# Y = gmm_sample[,r_dep]
-# Sxy = Y%*%Z
-# Sxz = t(Z)%*%X
-# Szz = t(Z)%*%Z
+Y = gmm_sample[,log(s_dep) - log(s_dep_0)]
+Sxy = Y%*%Z
+Sxz = t(Z)%*%X
+Szz = t(Z)%*%Z
+
+beta = solve(t(Sxz)%*%solve(Szz)%*%Sxz)%*%t(Sxz)%*%solve(Szz)%*%t(Sxy)
 # 
-# beta = solve(t(Sxz)%*%Sxz)
-# 
-# dep_iv = gmm_sample[,lm(r_dep~FEDFUNDS + FEDFUNDS*bankFactor)]
-# gmm_sample[,deposit_rate_iv:=predict(dep_iv)]
-# dep_res = gmm_sample[,lm(log(s_dep)~deposit_rate_iv+bankFactor+dateFactor+branch_count+geo_coverage+salary_per_asset+premises_per_asset)]
-# summary(dep_res)
+Y = gmm_sample[,dep_var:=log(s_dep) - log(s_dep_0)]
+dep_iv = gmm_sample[,lm(r_dep~+bankFactor*FEDFUNDS+dateFactor+branch_count+geo_coverage+salary_per_asset+premises_per_asset)]
+gmm_sample[,deposit_rate_iv:=predict(dep_iv)]
+dep_res = gmm_sample[,lm(dep_var~deposit_rate_iv+bankFactor+dateFactor+branch_count+geo_coverage+salary_per_asset+premises_per_asset)]
+summary(dep_res)
 # 
 # ## IV Moments at Solution
 # mom = t(dep_res$residuals%*%Z)
