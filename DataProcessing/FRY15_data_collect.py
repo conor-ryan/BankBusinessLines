@@ -38,7 +38,7 @@ for file in os.listdir(directory):
     # read in the file
     filename = os.fsdecode(file)
 
-    temp = pd.read_csv(FRY9_location+filename)
+    temp = pd.read_csv(FRY15_location+filename)
 
     try:
         payments     = np.float( temp[ temp.ItemName == 'RISKM390' ]['Value'] )
