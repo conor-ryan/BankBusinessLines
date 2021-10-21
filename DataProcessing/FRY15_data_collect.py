@@ -11,11 +11,11 @@ plt.style.use('seaborn')
 #Import dataframehjkhj
 #os.chdir('/home/pando004/Desktop/BankData/FRY15')
 # os.chdir('G:/Shared drives/BankBusinessLines/Data/FRY15')
-os.chdir('/home/ryan0463/Documents/Research/BankBusinessLines/Data/FRY15')
+os.chdir('/home/ryan0463/Documents/Research/BankBusinessLines')
 
 # import one file for now
-FRY9_location = os.getcwd() + '/'
-directory = os.fsencode(FRY9_location)
+FRY15_location = os.getcwd() + '/Data/FRY15/'
+directory = os.fsencode(FRY15_location)
 
 # 2d array where rows are banks, columns are (i) date (ii) id
 #           (iii) payments activity RISK M390
