@@ -7,7 +7,8 @@ import os
 
 #### Set Directory ####
 #os.chdir('/home/pando004/Desktop/BankData/FRY9')
-os.chdir('G:/Shared drives/BankBusinessLines')
+# os.chdir('G:/Shared drives/BankBusinessLines')
+os.chdir('/home/ryan0463/Documents/Research/BankBusinessLines')
 ## Directory Structure (as in G drive):
 #Directory (top level)
 ##   Data
@@ -68,7 +69,7 @@ bhck = [
 
         # insurance-related items
         'B988','C244','C248',
-        
+
         # securities underwriting, broker-dealer balances
         '3817', 'C252','8765','A127','8726'
         ]

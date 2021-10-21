@@ -11,7 +11,8 @@ plt.style.use('seaborn')
 #Import dataframe
 #os.chdir('/home/pando004/Desktop/BankData/FRY9')
 #df = pd.read_csv('frdata.csv')
-os.chdir('G:/Shared drives/BankBusinessLines')
+# os.chdir('G:/Shared drives/BankBusinessLines')
+os.chdir('/home/ryan0463/Documents/Research/BankBusinessLines')
 df = pd.read_csv('Data/frdata.csv')
 
 # make date variable
