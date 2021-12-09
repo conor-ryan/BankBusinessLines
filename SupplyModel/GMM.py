@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 class Parameter:
-    e = 0.05
+    e = 0.95
 
     def __init__(self,vec,X,Z):
         ## Parameters for Firm Problem
@@ -46,8 +46,9 @@ def calc_cost_moments(df,par):
     mc_results.columns = ["mc_cons", "mc_comm", "mc_inv", "mc_ins"]
 
     # Total Cost Estimate
-    df_cost = pd.concat([mc_results,df[["q_cons","q_comm","q_inv","q_ins"]]],axis="columns")
-    total_cost = df_cost.apply(lambda x: pf.total_cost(x.q_cons,x.q_comm,x.q_inv,x.q_ins,
+    df_cost = pd.concat([mc_results,df[["q_cons","q_comm","q_inv","q_ins","L_cons","L_comm","r_dep","q_dep"]]],axis="columns")
+    total_cost = df_cost.apply(lambda x: pf.total_cost(x.L_cons,x.L_comm,x.r_dep,x.q_dep,
+                                                x.q_cons,x.q_comm,x.q_inv,x.q_ins,
                                                 x.mc_cons,x.mc_comm,x.mc_inv,x.mc_ins,par),result_type="expand",axis=1)
 
     # ### This line only for testing ####
@@ -66,10 +67,32 @@ def simulate(df,parameters,X,Z):
     mc_results.columns = ["mc_cons", "mc_comm", "mc_inv", "mc_ins"]
 
     # Total Cost Estimate
-    df_cost = pd.concat([mc_results,df[["q_cons","q_comm","q_inv","q_ins"]]],axis="columns")
-    total_cost = df_cost.apply(lambda x: pf.total_cost(x.q_cons,x.q_comm,x.q_inv,x.q_ins,
+    df_cost = pd.concat([mc_results,df],axis="columns")
+    total_cost = df_cost.apply(lambda x: pf.total_cost(x.L_cons,x.L_comm,x.r_dep,x.q_dep,
+                                                x.q_cons,x.q_comm,x.q_inv,x.q_ins,
                                                 x.mc_cons,x.mc_comm,x.mc_inv,x.mc_ins,par),result_type="expand",axis=1)
     df['total_cost'] = total_cost
+    return df
+
+def predict(df,parameters,X,Z):
+    par = Parameter(parameters,X,Z)
+    # Marginal Cost Estimate
+    mc_results = df.apply(lambda x: pf.implied_marginal_cost(x.r_dep,x.r_cons,x.r_comm,x.p_inv,x.p_ins,
+                                                x.s_dep,x.s_cons,x.s_comm,x.s_inv,x.s_ins,par),result_type="expand",axis=1)
+    mc_results.columns = ["mc_cons", "mc_comm", "mc_inv", "mc_ins"]
+
+    mkup_results = df.apply(lambda x: pf.markups(x.r_dep,x.r_cons,x.r_comm,x.p_inv,x.p_ins,
+                                                    x.s_dep,x.s_cons,x.s_comm,x.s_inv,x.s_ins,par),result_type="expand",axis=1)
+    mkup_results.columns = ["mkup_dep","mkup_cons", "mkup_comm", "mkup_inv", "mkup_ins"]
+
+    df = pd.concat([df,mc_results],axis="columns")
+    df = pd.concat([df,mkup_results],axis="columns")
+    # Total Cost Estimate
+
+    total_cost = df.apply(lambda x: pf.total_cost(x.L_cons,x.L_comm,x.r_dep,x.q_dep,
+                                                x.q_cons,x.q_comm,x.q_inv,x.q_ins,
+                                                x.mc_cons,x.mc_comm,x.mc_inv,x.mc_ins,par),result_type="expand",axis=1)
+    df['predicted_cost'] = total_cost
     return df
 
 
@@ -81,15 +104,18 @@ def calc_cost_moments_withderivatives(df,par):
 
     # Total Cost Estimate
     df_cost = pd.concat([mc_results,df],axis="columns")
-    total_cost = df_cost.apply(lambda x: pf.total_cost(x.q_cons,x.q_comm,x.q_inv,x.q_ins,
+    total_cost = df_cost.apply(lambda x: pf.total_cost(x.L_cons,x.L_comm,x.r_dep,x.q_dep,
+                                                x.q_cons,x.q_comm,x.q_inv,x.q_ins,
                                                 x.mc_cons,x.mc_comm,x.mc_inv,x.mc_ins,par),result_type="expand",axis=1)
 
-    grad_temp = df_cost.apply(lambda x: pf.gradient_total_cost(x.r_dep,x.r_cons,x.r_comm,x.p_inv,x.p_ins,
+    grad_temp = df_cost.apply(lambda x: pf.gradient_total_cost(x.L_cons,x.L_comm,
+                                                    x.r_dep,x.r_cons,x.r_comm,x.p_inv,x.p_ins,
                                                     x.s_dep,x.s_cons,x.s_comm,x.s_inv,x.s_ins,
                                                     x.q_cons,x.q_comm,x.q_inv,x.q_ins,
                                                     x.mc_cons,x.mc_comm,x.mc_inv,x.mc_ins,par),result_type="expand",axis=1)
 
-    hess_temp = df_cost.apply(lambda x: pf.hessian_total_cost(x.r_dep,x.r_cons,x.r_comm,x.p_inv,x.p_ins,
+    hess_temp = df_cost.apply(lambda x: pf.hessian_total_cost(x.L_cons,x.L_comm,
+                                                    x.r_dep,x.r_cons,x.r_comm,x.p_inv,x.p_ins,
                                                     x.s_dep,x.s_cons,x.s_comm,x.s_inv,x.s_ins,
                                                     x.q_cons,x.q_comm,x.q_inv,x.q_ins,
                                                     x.mc_cons,x.mc_comm,x.mc_inv,x.mc_ins,par),axis=1)
@@ -143,8 +169,16 @@ def compute_gmm(df,X,Z,vec,W):
     moments_iv = iv.deposit_IV_moments(df,p)
     moments = np.concatenate((moments_iv,moments_cost),axis=0)
 
+    ## Temporary Monitoring
+    total_val = gmm_objective(moments,W)
+    # IV Moment Component
+    idx = list(range(len(moments_iv)))
+    IV_comp = np.matmul(np.transpose(moments_iv),np.matmul(W[np.ix_(idx,idx)],moments_iv))
+    cost_comp = total_val - IV_comp
+    print('IV component is',"{:.5g}".format(IV_comp),'and cost component is',"{:.5g}".format(cost_comp))
+
     # moments = iv.deposit_IV_moments(df,p)
-    return gmm_objective(moments,W)
+    return total_val
 
 def compute_gmm_gradient(df,X,Z,vec,W):
     p = Parameter(vec,X,Z)

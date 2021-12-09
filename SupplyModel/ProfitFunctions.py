@@ -35,6 +35,26 @@ def implied_marginal_cost(
 
     return mc_cons, mc_comm, mc_inv, mc_ins
 
+def markups(
+                            r_dep,r_cons,r_comm,p_inv,p_ins,
+                            s_dep,s_cons,s_comm,s_inv,s_ins,
+                            par):
+    mkup_dep = 1/(par.alpha_dep*(1-s_dep))
+    mkup_cons = 1/(par.alpha_cons*(1-s_cons))
+    mkup_comm = 1/(par.alpha_comm*(1-s_comm))
+    mkup_inv  = 1/(par.alpha_inv*(1-s_inv))
+    mkup_ins  =  1/(par.alpha_ins*(1-s_ins))
+
+    # Zero out the MC estimates for products that aren't offered
+    mkup_dep = (s_dep>0)*mkup_dep
+    mkup_cons = (s_cons>0)*mkup_cons
+    mkup_comm = (s_comm>0)*mkup_comm
+    mkup_inv = (s_inv>0)*mkup_inv
+    mkup_ins = (s_ins>0)*mkup_ins
+
+    return mkup_dep, mkup_cons, mkup_comm, mkup_inv, mkup_ins
+
+
 
 def gradient_marginal_cost(
                 r_dep,r_cons,r_comm,p_inv,p_ins,
@@ -94,6 +114,10 @@ def hessian_marginal_cost(
 # mc = A*gamma*q^(gamma-1)
 # avg cost = A*q^(gamma-1)
 # total cost = (mc/gamma)*q
+#  A = mc/(gamma*q^(gamma-1))
+# total cost = Q^gamma*mc/(gamma*q^(gamma-1))
+# total cost = q(Q/q)^gamma*mc/gamma
+#
 # and we only need to uncover a firm specific A.
 # We can be more general than this,
 # as long as each firms cost has only one product-specific parameter.
@@ -103,14 +127,16 @@ def hessian_marginal_cost(
 # At this stage, easier to maybe to robustness checks after
 # we get some sort of solution
 
-def total_cost(
+def total_cost(L_cons,L_comm,
+                r_dep,q_dep,
                 q_cons,q_comm,q_inv,q_ins,
                 mc_cons,mc_comm,mc_inv,mc_ins,
                 par):
-    cost = q_cons*mc_cons/par.gamma_cons + q_comm*mc_comm/par.gamma_comm + q_inv*mc_inv/par.gamma_inv + q_ins*mc_ins/par.gamma_ins
+
+    cost = (L_cons)*mc_cons/par.gamma_cons + (L_comm)*mc_comm/par.gamma_comm + q_inv*mc_inv/par.gamma_inv + q_ins*mc_ins/par.gamma_ins + r_dep*q_dep
     return cost
 
-def gradient_total_cost(
+def gradient_total_cost(L_cons,L_comm,
                 r_dep,r_cons,r_comm,p_inv,p_ins,
                 s_dep,s_cons,s_comm,s_inv,s_ins,
                 q_cons,q_comm,q_inv,q_ins,
@@ -118,14 +144,14 @@ def gradient_total_cost(
                 par):
     dmc_cons_d_cons, dmc_cons_d_dep, dmc_comm_d_comm, dmc_comm_d_dep, dmc_inv_d_inv, dmc_ins_d_ins = gradient_marginal_cost(r_dep,r_cons,r_comm,p_inv,p_ins,s_dep,s_cons,s_comm,s_inv,s_ins,par)
 
-    dcost_dalpha_dep = q_cons*dmc_cons_d_dep/par.gamma_cons + q_comm*dmc_comm_d_dep/par.gamma_comm
-    dcost_dalpha_cons = q_cons*dmc_cons_d_cons/par.gamma_cons
-    dcost_dalpha_comm = q_comm*dmc_comm_d_comm/par.gamma_comm
+    dcost_dalpha_dep = L_cons*dmc_cons_d_dep/par.gamma_cons + L_comm*dmc_comm_d_dep/par.gamma_comm
+    dcost_dalpha_cons = L_cons*dmc_cons_d_cons/par.gamma_cons
+    dcost_dalpha_comm = L_comm*dmc_comm_d_comm/par.gamma_comm
     dcost_dalpha_inv = q_inv*dmc_inv_d_inv/par.gamma_inv
     dcost_dalpha_ins = q_ins*dmc_ins_d_ins/par.gamma_ins
 
-    dcost_dgamma_cons = -q_cons*mc_cons/par.gamma_cons**2
-    dcost_dgamma_comm = -q_comm*mc_comm/par.gamma_comm**2
+    dcost_dgamma_cons = -L_cons*mc_cons/par.gamma_cons**2
+    dcost_dgamma_comm = -L_comm*mc_comm/par.gamma_comm**2
     dcost_dgamma_inv = -q_inv*mc_inv/par.gamma_inv**2
     dcost_dgamma_ins = -q_ins*mc_ins/par.gamma_ins**2
 
@@ -134,7 +160,7 @@ def gradient_total_cost(
     return dcost_dalpha_dep,dcost_dalpha_cons,dcost_dalpha_comm,dcost_dalpha_inv,dcost_dalpha_ins,dcost_dgamma_cons,dcost_dgamma_comm,dcost_dgamma_inv,dcost_dgamma_ins
 
 
-def hessian_total_cost(
+def hessian_total_cost(L_cons,L_comm,
                 r_dep,r_cons,r_comm,p_inv,p_ins,
                 s_dep,s_cons,s_comm,s_inv,s_ins,
                 q_cons,q_comm,q_inv,q_ins,
@@ -144,15 +170,15 @@ def hessian_total_cost(
     d2mc_cons_d_cons, d2mc_cons_d_dep, d2mc_comm_d_comm, d2mc_comm_d_dep, d2mc_inv_d_inv, d2mc_ins_d_ins = hessian_marginal_cost(r_dep,r_cons,r_comm,p_inv,p_ins,s_dep,s_cons,s_comm,s_inv,s_ins,par)
 
 
-    d2cost_d2alpha_dep = q_cons*d2mc_cons_d_dep/par.gamma_cons + q_comm*d2mc_comm_d_dep/par.gamma_comm
-    d2cost_dalpha_dep_dgamma_cons = -q_cons*dmc_cons_d_dep/par.gamma_cons**2
-    d2cost_dalpha_dep_dgamma_comm = -q_comm*dmc_comm_d_dep/par.gamma_comm**2
+    d2cost_d2alpha_dep = L_cons*d2mc_cons_d_dep/par.gamma_cons + L_comm*d2mc_comm_d_dep/par.gamma_comm
+    d2cost_dalpha_dep_dgamma_cons = -L_cons*dmc_cons_d_dep/par.gamma_cons**2
+    d2cost_dalpha_dep_dgamma_comm = -L_comm*dmc_comm_d_dep/par.gamma_comm**2
 
-    d2cost_d2alpha_cons = q_cons*d2mc_cons_d_cons/par.gamma_cons
-    d2cost_dalpha_cons_dgamma_cons = -q_cons*dmc_cons_d_cons/par.gamma_cons**2
+    d2cost_d2alpha_cons = L_cons*d2mc_cons_d_cons/par.gamma_cons
+    d2cost_dalpha_cons_dgamma_cons = -L_cons*dmc_cons_d_cons/par.gamma_cons**2
 
-    d2cost_d2alpha_comm = q_comm*d2mc_comm_d_comm/par.gamma_comm
-    d2cost_dalpha_comm_dgamma_comm = -q_comm*dmc_comm_d_comm/par.gamma_comm**2
+    d2cost_d2alpha_comm = L_comm*d2mc_comm_d_comm/par.gamma_comm
+    d2cost_dalpha_comm_dgamma_comm = -L_comm*dmc_comm_d_comm/par.gamma_comm**2
 
     d2cost_d2alpha_inv = q_inv*d2mc_inv_d_inv/par.gamma_inv
     d2cost_dalpha_inv_dgamma_inv = -q_inv*dmc_inv_d_inv/par.gamma_inv**2
@@ -162,8 +188,8 @@ def hessian_total_cost(
 
 
 
-    d2cost_d2gamma_cons = 2*q_cons*mc_cons/par.gamma_cons**3
-    d2cost_d2gamma_comm = 2*q_comm*mc_comm/par.gamma_comm**3
+    d2cost_d2gamma_cons = 2*L_cons*mc_cons/par.gamma_cons**3
+    d2cost_d2gamma_comm = 2*L_comm*mc_comm/par.gamma_comm**3
     d2cost_d2gamma_inv = 2*q_inv*mc_inv/par.gamma_inv**3
     d2cost_d2gamma_ins = 2*q_ins*mc_ins/par.gamma_ins**3
 

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 plt.style.use('seaborn')
 
-#Import dataframehjkhj
+#Import dataframe
 #os.chdir('/home/pando004/Desktop/BankData/FRY15')
 # os.chdir('G:/Shared drives/BankBusinessLines/Data/FRY15')
 os.chdir('/home/ryan0463/Documents/Research/BankBusinessLines')
