@@ -43,13 +43,13 @@ data[,commercial_market_share:=commercial_market_share/100]
 data[,insurance_market_share:=insurance_market_share/100]
 
 
-### By Quarter Quantities
-byQuarter = data[insurance_assets>0,list(total_assets = sum(total_assets,na.rm=TRUE)/1e6,
-                                         total_deposits=sum(total_deposits,na.rm=TRUE)/1e6,
-                                         new_cons_loans=sum(new_consumer_loans,na.rm=TRUE)/1e6,
-                                         new_comm_loans=sum(new_commercial_loans,na.rm=TRUE)/1e6,
-                                         insured_assets=sum(insurance_assets,na.rm=TRUE)/1e6),
-                 by=c("date")]
+# ### By Quarter Quantities
+# byQuarter = data[insurance_assets>0,list(total_assets = sum(total_assets,na.rm=TRUE)/1e6,
+#                                          total_deposits=sum(total_deposits,na.rm=TRUE)/1e6,
+#                                          new_cons_loans=sum(new_consumer_loans,na.rm=TRUE)/1e6,
+#                                          new_comm_loans=sum(new_commercial_loans,na.rm=TRUE)/1e6,
+#                                          insured_assets=sum(insurance_assets,na.rm=TRUE)/1e6),
+#                  by=c("date")]
 
 
 
