@@ -12,17 +12,17 @@ load(file="Data/EstimationSample.RData")
 
 ### Naive 
 
-data[,depvar:=log(total_deposits)]
-dep_ols = data[,lm(depvar~deposit_rate+bankFactor+dateFactor+branch_count+geo_coverage+salary_per_asset+premises_per_asset)]
+data[date>"2015-06-01",depvar:=log(total_deposits)]
+dep_ols = data[date>"2015-06-01",lm(depvar~deposit_rate+bankFactor+dateFactor+salary_per_asset+premises_per_asset)]
 
 ## IV
-dep_iv = data[,lm(deposit_rate~FEDFUNDS + FEDFUNDS*bankFactor)]
+dep_iv = data[date>"2015-06-01",lm(deposit_rate~FEDFUNDS + FEDFUNDS*bankFactor+bankFactor+dateFactor+salary_per_asset+premises_per_asset)]
 
-data[!is.na(deposit_rate),deposit_rate_iv:=predict(dep_iv)]
+data[!is.na(deposit_rate)&date>"2015-06-01",deposit_rate_iv:=predict(dep_iv)]
 
-dep_res = data[,lm(depvar~deposit_rate_iv+bankFactor+dateFactor+branch_count+geo_coverage+salary_per_asset+premises_per_asset)]
+dep_res = data[date>"2015-06-01",lm(depvar~deposit_rate_iv+bankFactor+dateFactor+salary_per_asset+premises_per_asset)]
 data[,depvar:=NULL]
-
+summary(dep_res)
 
 #### Demand Estimation For Consumer Loans #### 
 

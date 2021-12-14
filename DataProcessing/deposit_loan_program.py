@@ -9,10 +9,12 @@ import matplotlib.pyplot as plt
 plt.style.use('seaborn')
 
 #Import dataframe
-os.chdir('/home/pando004/Desktop')
-df = pd.read_csv('frdata.csv')
-#os.chdir('G:/Shared drives/BankBusinessLines')
-#df = pd.read_csv('Data/frdata.csv')
+
+#os.chdir('/home/pando004/Desktop/BankData/FRY9')
+#df = pd.read_csv('frdata.csv')
+# os.chdir('G:/Shared drives/BankBusinessLines')
+os.chdir('/home/ryan0463/Documents/Research/BankBusinessLines')
+df = pd.read_csv('Data/frdata.csv')
 
 # make date variable
 df['date'] = pd.to_datetime( df.RSSD9999, format='%Y%m%d')
@@ -810,7 +812,7 @@ for at,t in enumerate(df.date.unique()):
 
         except:
             df.loc[(df.date==t) & (df.RSSD9001==bank), 'insurance_market_share'] = 0
-    
+
 #-------------------------------#
 #                               #
 #   Investment Bank Products    #
@@ -832,17 +834,17 @@ print()
 df15['date'] = df15['date'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d'))
 df15 = df15.sort_values(by=['date'])
 
-# drop 2015 Q4 observations 
+# drop 2015 Q4 observations
 df15 = df15[ ~(df15['date'] <= df15.date.unique()[0] ) ]
 
 
 # collect number of unique IDs in FRY15 data, see how many match with FRY9
-fry15_ids = df15.id.unique()         
+fry15_ids = df15.id.unique()
 fr9_ids = set( df.RSSD9001.unique() )
 it = 0
-for at,idx in enumerate(df15.id.unique()): 
+for at,idx in enumerate(df15.id.unique()):
     if idx in fr9_ids:
-        it = it + 1     
+        it = it + 1
 print(100*it/len(fry15_ids),'% of FRY15 banks in FRY9 dataset')
 print()
 print(100*(1-it/len(df.RSSD9001.unique())),'% of FRY9 banks not included in FRY15 reports')
@@ -854,28 +856,28 @@ df_ibank = df15[['date','id','underwriting']]
 df_ibank['investment_quantity'] = df_ibank['underwriting']
 df_ibank['investment_revenue'] = np.nan
 df_ibank['investment_price'] = np.nan
-df_ibank['investment_market_share'] = np.nan 
+df_ibank['investment_market_share'] = np.nan
 df_ibank['total_assets'] = np.nan
-Investment_Market = [] 
+Investment_Market = []
 
 # compute total volume of market
 for at,t in enumerate(df_ibank.date.unique()):
     Investment_Market.append( np.nansum( df_ibank[df_ibank.date == t]['investment_quantity'] ) )
-   
+
 for idx,bank in enumerate(df_ibank.id.unique()):
     # first quarter is 2016 Q2
     quart = 1
-    
+
     for at,t in enumerate(df_ibank.date.unique()):
-        if at == 0: 
+        if at == 0:
             # investment bank revenues
             try:
                 df_ibank.loc[ (df_ibank.id == bank) & (df_ibank.date == t), 'investment_revenue' ] = (1/2)*np.float(df[ (df.RSSD9001 == bank) & (df.date == t)]['BHCKC888' ])
             except:
                 pass
-            
+
         else:
-            
+
             if quart ==0:
                 # investment bank revenues
                 try:
@@ -888,7 +890,7 @@ for idx,bank in enumerate(df_ibank.id.unique()):
                     df_ibank.loc[ (df_ibank.id == bank) & (df_ibank.date == t), 'investment_revenue' ] = np.float(df[ (df.RSSD9001 == bank) & (df.date == t)]['BHCKC888' ]) - np.float(df[ (df.RSSD9001 == bank) & (df.date == df15.date.unique()[at-1])]['BHCKC888' ])
                 except:
                     pass
-            
+
 
         # investment bank price
         try:
@@ -901,19 +903,19 @@ for idx,bank in enumerate(df_ibank.id.unique()):
             df_ibank.loc[ (df_ibank.id == bank) & (df_ibank.date == t), 'investment_market_share' ] = np.float( df_ibank[ (df_ibank.id == bank) & (df_ibank.date == t)][ 'investment_quantity' ] )/np.float( Investment_Market[at] )
         except:
             pass
-        
+
         try:
             df_ibank.loc[ (df_ibank.id == bank) & (df_ibank.date == t), 'total_assets' ] = np.float( df[ (df.RSSD9001 == bank) & (df.date == t)][ 'total_assets' ] )
         except:
             pass
-        
+
         #if not last quarter of fiscal year
         if quart < 3:
             quart = quart + 1
         else:
             quart = 0
-        
-        
+
+
 plt.close('all')
 plt.figure(1)
 plt.plot(df_ibank.date.unique(),Investment_Market)
@@ -945,7 +947,7 @@ test.to_csv('Data/InvestmentMarketSizeByQuarter.csv')
 
 
 # find FRY9 variables which correlated with (i) payments, (ii) undrwriting and (iii)
-#   custody accounts, or assume all other banks have zero values in these areas.  
+#   custody accounts, or assume all other banks have zero values in these areas.
 
 # look at FRY9 quantities correlated with FRY15 underwriting and payments activity
 df_corr = df15[[ 'date','id','underwriting','payments' ]]
@@ -958,9 +960,9 @@ df_corr['deriv_forex_trade'] =  np.nan
 
 for idx,bank in enumerate(df_corr.id.unique()):
     print('bank number',idx,'out of',len(df_corr.id.unique()))
-    
+
     for at,t in enumerate(df_corr.date.unique()):
-    
+
         try:
             df_corr.loc[ (df_corr.id == bank) & (df_corr.date == t), 'securities_underwriting' ] = np.float(df[ (df.RSSD9001 == bank) & (df.date == t)]['BHCK3817' ])
         except:
@@ -981,7 +983,7 @@ for idx,bank in enumerate(df_corr.id.unique()):
             df_corr.loc[ (df_corr.id == bank) & (df_corr.date == t), 'deriv_forex_trade' ] = np.float(df[ (df.RSSD9001 == bank) & (df.date == t)]['BHCKA127' ])
         except:
             pass
-        
+
 # look at pairwise correlations
 print('investment bank correlations')
 df_corr[['underwriting','securities_underwriting','broker_dealer']].corr()
@@ -989,7 +991,7 @@ df_corr[['underwriting','securities_underwriting','broker_dealer']].corr()
 print('payments activity correlations')
 df_corr[['payments','spot_forex','deriv_forex_other','deriv_forex_trade']].corr()
 
-# look a FE panel regression 
+# look a FE panel regression
 plt.close('all')
 [plt.plot(df_corr[df_corr.id == bank]['date'],df_corr[df_corr.id == bank]['securities_underwriting']) for idx,bank in enumerate(df_corr.id.unique())]
 
@@ -998,8 +1000,8 @@ for at,t in enumerate(df.date.unique()):
     agg.append( np.nansum( df[df.date==t]['BHCKC252'] )/(1000*1000) )
 
 plt.close()
-plt.plot(df.date.unique(),agg)  
-  
+plt.plot(df.date.unique(),agg)
+
 #------------------#
 #                  #
 #   Data Output    #
@@ -1011,9 +1013,9 @@ plt.plot(df.date.unique(),agg)
 df[['date','RSSD9001','total_assets',
     'deposit_rate','consumer_rate','commercial_rate','insurance_price',
     'deposit_market_share','consumer_market_share','commercial_market_share','insurance_market_share',
-    'total_deposits','new_consumer_loans','new_commercial_loans','insurance_assets',
-    'salaries','premises_cost','other_cost','total_cost',
-    'consumer_revenue','commercial_revenue','insurance_revenue']].to_csv('Data/frdata_refined.csv')
+    'total_deposits','insurance_assets','consumer_loans','commercial_loans',
+    'salaries','premises_cost','other_cost','total_cost']].to_csv('Data/frdata_refined.csv')
+
 
 # export total market volumes
 test = pd.DataFrame({ 'date':df.date.unique(),
