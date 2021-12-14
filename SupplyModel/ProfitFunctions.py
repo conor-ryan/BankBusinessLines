@@ -36,9 +36,9 @@ def implied_marginal_cost(
     return mc_cons, mc_comm, mc_inv, mc_ins
 
 def markups(
-                            r_dep,r_cons,r_comm,p_inv,p_ins,
-                            s_dep,s_cons,s_comm,s_inv,s_ins,
-                            par):
+                r_dep,r_cons,r_comm,p_inv,p_ins,
+                s_dep,s_cons,s_comm,s_inv,s_ins,
+                par):
     mkup_dep = 1/(par.alpha_dep*(1-s_dep))
     mkup_cons = 1/(par.alpha_cons*(1-s_cons))
     mkup_comm = 1/(par.alpha_comm*(1-s_comm))

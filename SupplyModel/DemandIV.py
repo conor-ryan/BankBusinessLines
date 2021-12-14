@@ -2,6 +2,7 @@ import statsmodels
 import numpy as np
 
 # Derive the non-price product quality from structural demand equation
+# log(s_ij) - log(s_i0) = alpha*p + beta*X + epsilon
 def product_deltas(s,s_0,r,alpha):
     delta = np.log(s) - np.log(s_0) - alpha*r
     return delta

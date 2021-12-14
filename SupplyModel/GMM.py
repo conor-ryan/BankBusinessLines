@@ -3,8 +3,12 @@ import DemandIV as iv
 import numpy as np
 import pandas as pd
 
+
+#### Class Variable: the object we are going to estimate
+
+
 class Parameter:
-    e = 0.95
+    e = 0.05
     dep_index = 0
     cons_index = 1
     comm_index = 2

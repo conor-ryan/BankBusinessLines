@@ -88,12 +88,12 @@ deviations = np.concatenate(([10.,100.,100.,100.,100.,0.0,0.0,0.0,0.0],np.zeros(
 # p0 = parameter_vector + np.random.rand(len(parameter_vector))*deviations - deviations
 p0 = parameter_vector.copy()
 #
-# p_est = newton_raphson(df,p0,W,X_dep = X,Z_dep=Z)
+ p_est = newton_raphson(df,p0,W,X_dep = X,Z_dep=Z)
 
 
-### Add Predicted Cost to the
-# df = predict(df,p0,X,Z)
-# df.to_csv('EstimationPrediction.csv')
+## Add Predicted Cost to the
+df = predict(df,p_est,X,Z)
+df.to_csv('EstimationPrediction.csv')
 #
 # p_idx = [0]
 # p_idx.extend(list(range(9,(9+X.shape[1]))))
