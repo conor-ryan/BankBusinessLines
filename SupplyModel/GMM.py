@@ -229,7 +229,6 @@ def compute_gmm(df,vec,W,X_dep=None,X_cons=None,X_comm=None,X_ins=None,X_inv=Non
     IV_comp = np.matmul(np.transpose(moments_iv),np.matmul(W[np.ix_(idx,idx)],moments_iv))
     cost_comp = total_val - IV_comp
     print('IV component is',"{:.5g}".format(IV_comp),'and cost component is',"{:.5g}".format(cost_comp))
-
     # moments = iv.deposit_IV_moments(df,p)
     return total_val
 
@@ -268,14 +267,14 @@ def compute_gmm_hessian(df,vec,W,X_dep=None,X_cons=None,X_comm=None,X_ins=None,X
 
 ## Numerical Derivative test functions
 def numerical_gradient(df,vec,W,X_dep=None,X_cons=None,X_comm=None,X_ins=None,X_inv=None,Z_dep = None,Z_cons=None,Z_comm=None,Z_ins=None,Z_inv=None):
-    tol = 1e-6
+    tol =1e-6
     grad = np.zeros(len(vec))
     orig = compute_gmm(df,vec,W,X_dep=X_dep,X_cons=X_cons,X_comm=X_comm,X_ins=X_ins,X_inv=X_inv,Z_dep = Z_dep,Z_cons=Z_cons,Z_comm=Z_comm,Z_ins=Z_ins,Z_inv=Z_inv)
     for i in range(len(vec)):
         new_vec = vec.copy()
         new_vec[i]+=tol
-        new_val = compute_gmm(df,vec,W,X_dep=X_dep,X_cons=X_cons,X_comm=X_comm,X_ins=X_ins,X_inv=X_inv,Z_dep = Z_dep,Z_cons=Z_cons,Z_comm=Z_comm,Z_ins=Z_ins,Z_inv=Z_inv)
-        grad[i] = (new_val-orig)/1e-6
+        new_val = compute_gmm(df,new_vec,W,X_dep=X_dep,X_cons=X_cons,X_comm=X_comm,X_ins=X_ins,X_inv=X_inv,Z_dep = Z_dep,Z_cons=Z_cons,Z_comm=Z_comm,Z_ins=Z_ins,Z_inv=Z_inv)
+        grad[i] = (new_val-orig)/tol
     return grad
 
 def numerical_hessian(df,vec,W,X_dep=None,X_cons=None,X_comm=None,X_ins=None,X_inv=None,Z_dep = None,Z_cons=None,Z_comm=None,Z_ins=None,Z_inv=None):
@@ -285,6 +284,6 @@ def numerical_hessian(df,vec,W,X_dep=None,X_cons=None,X_comm=None,X_ins=None,X_i
     for i in range(len(vec)):
         new_vec = vec.copy()
         new_vec[i]+=tol
-        new_val = compute_gmm_gradient(df,vec,W,X_dep=X_dep,X_cons=X_cons,X_comm=X_comm,X_ins=X_ins,X_inv=X_inv,Z_dep = Z_dep,Z_cons=Z_cons,Z_comm=Z_comm,Z_ins=Z_ins,Z_inv=Z_inv)
-        hess[i,] = (new_val-orig)/1e-6
+        new_val = compute_gmm_gradient(df,new_vec,W,X_dep=X_dep,X_cons=X_cons,X_comm=X_comm,X_ins=X_ins,X_inv=X_inv,Z_dep = Z_dep,Z_cons=Z_cons,Z_comm=Z_comm,Z_ins=Z_ins,Z_inv=Z_inv)
+        hess[i,] = (new_val-orig)/tol
     return hess

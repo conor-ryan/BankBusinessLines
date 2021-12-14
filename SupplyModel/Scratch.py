@@ -42,22 +42,50 @@ Szz = np.matmul(np.transpose(Z),Z)
 W[0:IV_moment_length,0:IV_moment_length] = np.linalg.inv(Szz)
 print(W)
 
-parameter_vector = np.array([3.166537e+01,-1000.,-1000.,-1000.,-1000.,1.0,1.0,1.0,1.0])
+parameter_vector = np.array([3.166537e+01,-800.,-600.,-80.,-120.,0.5,0.6,0.7,0.8])
 parameter_vector = np.concatenate((parameter_vector,np.zeros(X.shape[1])),axis=0)
 
 p = Parameter(parameter_vector,X_dep= X,Z_dep = Z)
 
-moments_cost = calc_cost_moments(df,p)
-print("Cost Moment Starting Value")
-W_cost = np.identity(cost_moment_length)
-diagonal = df['total_cost'].to_numpy()
-diagonal = np.sqrt(diagonal)*1e-18
-np.fill_diagonal(W_cost,diagonal)
+df = simulate(df,parameter_vector,X_dep = X,Z_dep = Z)
 
-compute_gmm(df,parameter_vector,W,X_dep=X,Z_dep=Z)
-compute_gmm_gradient(df,parameter_vector,W,X_dep=X,Z_dep=Z)
-val, grad, hess = compute_gmm_hessian(df,parameter_vector,W,X_dep=X,Z_dep=Z)
-print(grad)
+#
+deviations = np.concatenate(([10.,100.,100.,100.,100.,0.0,0.0,0.0,0.0],np.zeros(X.shape[1])),axis=0)
+
+p0 = parameter_vector + np.random.rand(len(parameter_vector))*deviations - deviations
+# p0 = parameter_vector.copy()
+p_est = newton_raphson(df,p0,W,X_dep = X,Z_dep=Z)
+
+
+# print("Gradient Test")
+# fval, grad, hess =  compute_gmm_hessian(df,parameter_vector,W,X_dep=X,Z_dep=Z)
+# print(grad)
+#
+# grad_test = numerical_gradient(df,parameter_vector,W,X_dep=X,Z_dep=Z)
+# print(grad_test)
+# print(np.mean((grad-grad_test)/grad))
+# print(np.mean((grad-grad_test)))
+#
+# print("Hessian Test")
+# print(hess)
+#
+# hess_test = numerical_hessian(df,parameter_vector,W,X_dep=X,Z_dep=Z)
+# print(hess_test)
+#
+# print((hess-hess_test)/hess)
+# print(np.mean((hess-hess_test)))
+#
+# moments_cost = calc_cost_moments(df,p)
+# print("Cost Moment Starting Value")
+# W_cost = np.identity(cost_moment_length)
+# diagonal = df['total_cost'].to_numpy()
+# diagonal = np.sqrt(diagonal)*1e-18
+# np.fill_diagonal(W_cost,diagonal)
+#
+# compute_gmm(df,parameter_vector,W,X_dep=X,Z_dep=Z)
+# compute_gmm_gradient(df,parameter_vector,W,X_dep=X,Z_dep=Z)
+# val, grad, hess = compute_gmm_hessian(df,parameter_vector,W,X_dep=X,Z_dep=Z)
+# print(grad)
 
 
 #
@@ -80,21 +108,12 @@ print(grad)
 # print(np.min(IV_mom))
 
 
-df = simulate(df,parameter_vector,X_dep = X,Z_dep = Z)
-
-#
-deviations = np.concatenate(([10.,100.,100.,100.,100.,0.0,0.0,0.0,0.0],np.zeros(X.shape[1])),axis=0)
-
-# p0 = parameter_vector + np.random.rand(len(parameter_vector))*deviations - deviations
-p0 = parameter_vector.copy()
-#
- p_est = newton_raphson(df,p0,W,X_dep = X,Z_dep=Z)
 
 
 ## Add Predicted Cost to the
-df = predict(df,p_est,X,Z)
-df.to_csv('EstimationPrediction.csv')
-#
+# df = predict(df,p_est,X,Z)
+# df.to_csv('EstimationPrediction.csv')
+# #
 # p_idx = [0]
 # p_idx.extend(list(range(9,(9+X.shape[1]))))
 # print("Index",p_idx)
@@ -112,22 +131,7 @@ df.to_csv('EstimationPrediction.csv')
 # # Initialize Gradient Increment
 # alpha = 0.1
 
-# print("Gradient Test")
-# # moments,G,H = calc_cost_moments_withderivatives(df,p)
-# fval, grad, hess =  compute_gmm_hessian(df,M,Z,parameter_vector,W)
-# print(grad)
-#
-# grad_test = numerical_gradient(df,M,Z,parameter_vector,W)
-# print(grad_test)
-# print((grad-grad_test)/grad)
-#
-# print("Hessian Test")
-# print(hess)
-#
-# hess_test = numerical_hessian(df,M,Z,parameter_vector,W)
-# print(hess_test)
-#
-# print((hess-hess_test)/hess)
+
 
 
 # p_est = newton_raphson(df,M,Z,parameter_vector)

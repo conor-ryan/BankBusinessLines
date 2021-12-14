@@ -2,11 +2,11 @@ import numpy as np
 import GMM as gmm
 
 def newton_raphson(df,p0,W,X_dep=None,X_cons=None,X_comm=None,X_ins=None,X_inv=None,Z_dep = None,Z_cons=None,Z_comm=None,Z_ins=None,Z_inv=None,ftol=1e-8):
-    p_idx = list(range(0,5))
-    p_idx.extend(range(9,len(p0)))
-    capped_params_idx = list(range(0,5))
-    # p_idx = list(range(len(p0)))
-    # capped_params_idx = list(range(0,9))
+    # p_idx = list(range(0,5))
+    # p_idx.extend(range(9,len(p0)))
+    # capped_params_idx = list(range(0,5))
+    p_idx = list(range(len(p0)))
+    capped_params_idx = list(range(0,9))
     print(p0[capped_params_idx])
     # print(capped_params_idx)
     ### Print Format
@@ -35,7 +35,7 @@ def newton_raphson(df,p0,W,X_dep=None,X_cons=None,X_comm=None,X_ins=None,X_inv=N
 
         # Cap step change at half of parameters estimate.
         # This should effectively stop the affected parameters from changing sign
-        check_cap = [(abs(step[x])/param_vec[x])<0.5 or step[x]<1.0 for x in capped_params_idx]
+        check_cap = [(abs(step[x])/param_vec[x])<0.5 or abs(step[x])<0.25 for x in capped_params_idx]
         if False in check_cap:
             cap = max(abs(step[capped_params_idx])/param_vec[capped_params_idx])
             step = step/cap*0.5
@@ -46,7 +46,7 @@ def newton_raphson(df,p0,W,X_dep=None,X_cons=None,X_comm=None,X_ins=None,X_inv=N
         print('Now trying parameter vector', param_vec[0:9])
         # print('Newton Raphson Step: ',step)
         ## Make an attempt to be descending
-        new_fval = gmm.compute_gmm(df,p0,W,X_dep=X_dep,X_cons=X_cons,X_comm=X_comm,X_ins=X_ins,X_inv=X_inv,Z_dep = Z_dep,Z_cons=Z_cons,Z_comm=Z_comm,Z_ins=Z_ins,Z_inv=Z_inv)
+        new_fval = gmm.compute_gmm(df,param_new,W,X_dep=X_dep,X_cons=X_cons,X_comm=X_comm,X_ins=X_ins,X_inv=X_inv,Z_dep = Z_dep,Z_cons=Z_cons,Z_comm=Z_comm,Z_ins=Z_ins,Z_inv=Z_inv)
         alpha = abs(1/np.diag(H))
         while new_fval>fval*(1+1e-5):
             step = -G*alpha
@@ -60,13 +60,13 @@ def newton_raphson(df,p0,W,X_dep=None,X_cons=None,X_comm=None,X_ins=None,X_inv=N
             print("Gradient step")
             param_new[p_idx] = param_vec[p_idx] + step
             print('Now trying parameter vector', param_vec[0:9])
-            new_fval = gmm.compute_gmm(df,p0,W,X_dep=X_dep,X_cons=X_cons,X_comm=X_comm,X_ins=X_ins,X_inv=X_inv,Z_dep = Z_dep,Z_cons=Z_cons,Z_comm=Z_comm,Z_ins=Z_ins,Z_inv=Z_inv)
+            new_fval = gmm.compute_gmm(df,param_new,W,X_dep=X_dep,X_cons=X_cons,X_comm=X_comm,X_ins=X_ins,X_inv=X_inv,Z_dep = Z_dep,Z_cons=Z_cons,Z_comm=Z_comm,Z_ins=Z_ins,Z_inv=Z_inv)
             alpha = alpha/10
 
         param_vec[p_idx] = param_vec[p_idx] + step
 
         # Evaluation for next iteration
-        fval, G, H = gmm.compute_gmm_hessian(df,p0,W,X_dep=X_dep,X_cons=X_cons,X_comm=X_comm,X_ins=X_ins,X_inv=X_inv,Z_dep = Z_dep,Z_cons=Z_cons,Z_comm=Z_comm,Z_ins=Z_ins,Z_inv=Z_inv)
+        fval, G, H = gmm.compute_gmm_hessian(df,param_vec,W,X_dep=X_dep,X_cons=X_cons,X_comm=X_comm,X_ins=X_ins,X_inv=X_inv,Z_dep = Z_dep,Z_cons=Z_cons,Z_comm=Z_comm,Z_ins=Z_ins,Z_inv=Z_inv)
 
         ## Allow for estiamtion to finish even if it's not well identified
         check_unidentified = [x for x in capped_params_idx if (param_vec[x]>1e7) or (param_vec[x]<-1e7) ]
