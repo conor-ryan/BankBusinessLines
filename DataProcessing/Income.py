@@ -23,29 +23,758 @@ df = df.sort_values(by=['date'])
 # drop dataframe dates to match market size data
 df = df[ ~(df['date'] < df.date.unique()[86] ) ]
 
-# replace nan entries in data with zero value
-df[['BHCK4174','BHCK6760','BHCK4176','BHCK6761','BHCKA517','BHCKA518','BHCKHK03','BHCKHK04','BHDM1797','BHDM5367',
-    'BHDM5368','BHCKF158','BHCKF159','BHDM1420','BHDM1975','BHDM1460','BHCKF160','BHCKF161','BHCK1292','BHCK1296',
-    'BHCK1590','BHDM1766','BHDMJ454','BHDM1545','BHDM2165','BHDMKX57','BHCK5411','BHCKC234','BHCKC235','BHCK5412',
-    'BHCKC217','BHCKC218','BHCKC891','BHCKC893','BHCK3584','BHCK3588','BHCKC895','BHCKC897','BHCK4655','BHCK4645',
-    'BHCKB514','BHCKK129','BHCKK205','BHCK4644','BHCKF158','BHCKC880','BHCKKX50','BHCKC892','BHCKC894','BHCK3585',
-    'BHCK3589','BHCKC896','BHCKC898','BHCK4665','BHCK4617','BHCKB515','BHCKK133','BHCKK206','BHCK4628','BHCKF187',
-    'BHCKF188','BHCKKX51',
-    'BHCK4135','BHCK4217','BHCK4092','BHCK4093',
-    'BHCK2170']] = (
+# drop all observations which report zero net income 
+df = df.dropna(subset=['BHCK4340'])
 
-        df[['BHCK4174','BHCK6760','BHCK4176','BHCK6761','BHCKA517','BHCKA518','BHCKHK03','BHCKHK04','BHDM1797','BHDM5367',
-            'BHDM5368','BHCKF158','BHCKF159','BHDM1420','BHDM1975','BHDM1460','BHCKF160','BHCKF161','BHCK1292','BHCK1296',
-            'BHCK1590','BHDM1766','BHDMJ454','BHDM1545','BHDM2165','BHDMKX57','BHCK5411','BHCKC234','BHCKC235','BHCK5412',
-            'BHCKC217','BHCKC218','BHCKC891','BHCKC893','BHCK3584','BHCK3588','BHCKC895','BHCKC897','BHCK4655','BHCK4645',
-            'BHCKB514','BHCKK129','BHCKK205','BHCK4644','BHCKF158','BHCKC880','BHCKKX50','BHCKC892','BHCKC894','BHCK3585',
-            'BHCK3589','BHCKC896','BHCKC898','BHCK4665','BHCK4617','BHCKB515','BHCKK133','BHCKK206','BHCK4628','BHCKF187',
-            'BHCKF188','BHCKKX51',
-            'BHCK4135','BHCK4217','BHCK4092','BHCK4093',
-            'BHCK2170']].fillna(0) )
+# set to zero certain revenue items 
+df[['BHCK4435','BHCK4436','BHCKF821','BHCK4059','BHCK4065','BHCK4115','BHCK4020','BHCK4518','BHCK4230','BHCK8560','BHCK8561','BHCK4042',
+    'BHCKHK03','BHCKHK04','BHCK6761','BHCK4172','BHCK4180','BHCK4185','BHCK4397','BHCK4398','BHCK4483','BHCKC013','BHCKC015','BHCKC016','BHCKT047','BHCKF555',
+    'BHCKC887','BHCKC386','BHCKC014','BHCKC387','BHCKKX46','BHCKKX47',
+    'BHCK4070','BHCKC886','BHCKC888','BHCKB491','BHCKB492','BHCKB493',
+    'BHCKB488','BHCKB489','BHCK4060','BHCK4069','BHCKA220','BHCKB496','BHCK3521','BHCK3196',
+    'BHCKB497','BHCK8562','BHCK8563','BHCK8564',
+    'BHCK4093']] = (
+df[['BHCK4435','BHCK4436','BHCKF821','BHCK4059','BHCK4065','BHCK4115','BHCK4020','BHCK4518','BHCK4230','BHCK8560','BHCK8561','BHCK4042',
+    'BHCKHK03','BHCKHK04','BHCK6761','BHCK4172','BHCK4180','BHCK4185','BHCK4397','BHCK4398','BHCK4483','BHCKC013','BHCKC015','BHCKC016','BHCKT047','BHCKF555',
+    'BHCKC887','BHCKC386','BHCKC014','BHCKC387','BHCKKX46','BHCKKX47',
+    'BHCK4070','BHCKC886','BHCKC888','BHCKB491','BHCKB492','BHCKB493',
+    'BHCKB488','BHCKB489','BHCK4060','BHCK4069','BHCKA220','BHCKB496','BHCK3521','BHCK3196',
+    'BHCKB497','BHCK8562','BHCK8563','BHCK8564',
+    'BHCK4093']].fillna(0) )
 
-### Bank Size ###
-df['total_assets'] = df['BHCK2170']
+
+#
+#
+#
+#   Create firm-level measures of business line revenues    
+#
+#
+#   (1) Traditional Banking
+#       (a) Interest revenue from lending (4435 + 4436 + F821 + 4059)
+#       (b) Interest revenue from leases (4065)
+#       (c) Interest revenue from lending to financial institutions (4115 + 4020)
+#       (d) Other interest revenue (4518)
+#       (e) LESS provisions (4230)
+#       (f) Net gains on loans, leases, real estate (8560 + 8561)
+#       (g) Revenue from other real estate (4042)
+#
+#   (2) Deposits
+#       (a) LESS Interest expense (HK03 + HK04 + 6761 + 4172 + 4180 + 4185 + 4397 + 4398)
+#       (b) Deposit service charges (4483)
+#       (c) Revenue from checks, atms, safe deposit, wire transfer (C013 + C016 + C015 + T047)
+#       (d) Credit card interchange fees (F555)
+#
+#   (3) Insurance Banking*
+#       (a) Annuity sales (C887)
+#       (b) Underwriting revenue (C386)
+#       (c) Life insurance (C014)
+#       (d) Other revenue (C387)
+#
+#   (4) Investment Banking*
+#       (a) Fiduciary activities (4070)
+#       (b) Revenue from securities brokerage (C886)
+#       (c) Investment banking non-interest revenue (C888)
+#       (d) Venture capital (B491)
+#       (e) Net servicing fees (B492)
+#       (f) Net securitization income (B493)
+#
+#   (5) Trading/Treasury
+#       (a) Interest and dividends on securities (B488 + B489 + 4060)
+#       (b) Interest revenue from trading assets (4069)
+#       (c) Non-interest trading revenue (A220)
+#       (d) Net gains on sales of other assets (B496)
+#       (e) Realized gains on securities (3521 + 3196)
+#
+#   BHCK 4301 is the longer/older data series for pre-tax net income (and before discontinued operations)
+#
+#   * Holding companies with <$5b do not report items (3) and (4) separately, but instead report Revenue from 
+#       securities brokerage, investment banking, advisory and underwriting (KX46) and Revenue from insurance 
+#       activities (KX47).  
+#
+#   - Hard to say whether Fiduciary Activity revenue should be Traditional Banking (as a part of the consumer branch) or Investment Banking
+#
+#   - 2017Q4 has a large spike in income taxes which is related to the repatriation tax from the 2017 Tax Cuts & Jobs Act
+#
+#   - Trading assets and trading revenue (4069) are only reported by banks with assets > $5b. IF a bank is below the threshold,
+#       they report the revenue and expense in the "other" categories for interest income (4518), interest expense (4398) and noninterest income (B497)
+#
+
+#
+#
+#   Deflate relevant series
+#
+#
+
+# next steps (1) defalte series (3) less than 5 billion for ibank and insurance, (4) check the accounting identity on pre-tax net income
+
+
+#
+#
+#   Filter out smaller banks
+#
+#
+# initialize list of bank indices and threshold number N
+top_idx = []
+topN = 50
+
+# for each quarter
+for at,t in enumerate(df.date.unique()):
+
+    # determine top N firms by revenue
+    rev_idx = list( (  df[ df.date ==t ]['BHCK4107'] - df[ df.date ==t ]['BHCK4230'] + df[ df.date ==t ]['BHCK4079'] + df[ df.date ==t ]['BHCK3521'] + df[ df.date ==t ]['BHCK3196'] ).nlargest(topN).index )
+
+    # recover bank id's
+    rev_list = []
+
+    for i in range(topN):
+        try:
+            rev_list.append( df[df.index == rev_idx[i] ]['RSSD9001'].unique()[0] )
+        except:
+            pass
+
+    # append list with unique union set
+    top_idx = list( set(rev_list).union( set(top_idx) ) )
+    #top_idx = list( set(con_list).union( set(com_list),set(dep_list),set(ins_list), set(top_idx) ) )
+    
+print('Collected a total of', len(top_idx),' bank IDs')
+
+#create subset dataframe using bank id's
+for i in range(len(top_idx)):
+
+    if i ==0:
+        temp_df = df[df.RSSD9001 == top_idx[i]]
+    else:
+        temp_df = temp_df.append( df[df.RSSD9001 == top_idx[i]] )
+
+df = temp_df.copy()
+df = df.sort_values(by=['date'])
+
+
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#                                      # 
+#   Bank Business Line Segmentation    #
+#                                      # 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+df['traditional_revenue'] = 0
+df['deposit_revenue'] = 0
+df['insurance_revenue'] = 0
+df['investment_revenue'] = 0 
+df['treasury_revenue'] = 0
+
+# first compute quartlery revenue for each bank, each quarter
+for idx, bank in enumerate( df.RSSD9001.unique() ):
+
+    print('Traditional Bank:',idx,' out of ',len(df.RSSD9001.unique()))
+    quart = 1
+
+    for at, t in enumerate( df.date.unique() ):
+        if at ==0:
+            try:
+                temp_val = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4435']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4436']) + 
+                            np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKF821']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4059']) + 
+                            np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4065']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4115']) + 
+                            np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4020']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4518']) - 
+                            np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4230']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK8560']) + 
+                            np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK8561']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4042']))
+                           
+                temp_val_dep = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4483']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC013']) + 
+                                np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC015']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC016']) + 
+                                np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKT047']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKF555']) - 
+                                np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKHK03']) - np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKHK04']) - 
+                                np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK6761']) - np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4172']) - 
+                                np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4180']) - np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4185']) -
+                                np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4397']) - np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4398']))
+                
+                if float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK2170']) < 5000000:  
+                    temp_val_ins = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKKX46']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKKX47']))
+                    
+                    # there are circumstances in the data where they keep reporting the other categories when assets < 5b
+                    if temp_val_ins ==0:
+                        temp_val_ins = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC887']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC386']) + 
+                                        np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC014']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC387']))
+                else:
+                    temp_val_ins = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC887']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC386']) + 
+                                    np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC014']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC387']))
+                
+                temp_val_inv = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4070']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC886']) + 
+                                np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC888']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB491']) + 
+                                np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB492']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB493']))
+
+                temp_val_treas = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB488']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB489']) + 
+                                  np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4060']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4069']) + 
+                                  np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKA220']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB496']) +
+                                  np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK3521']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK3196']))
+                
+
+                #print(t,': ',temp_val)
+                #print('final:',temp_val)
+                #print()
+                df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'traditional_revenue']   = temp_val
+                df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'deposit_revenue']       = temp_val_dep
+                df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'insurance_revenue']     = temp_val_ins
+                df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'investment_revenue']    = temp_val_inv
+                df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'treasury_revenue']      = temp_val_treas
+                
+            except:
+                pass
+        else:
+            if quart == 0:
+                try:
+                    temp_val = np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4435']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4436']) + \
+                               np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKF821']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4059']) + \
+                               np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4065']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4115']) + \
+                               np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4020']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4518']) - \
+                               np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4230']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK8560']) + \
+                               np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK8561']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4042'])
+                    
+                    temp_val_dep = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4483']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC013']) + 
+                                    np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC015']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC016']) + 
+                                    np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKT047']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKF555']) - 
+                                    np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKHK03']) - np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKHK04']) - 
+                                    np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK6761']) - np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4172']) - 
+                                    np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4180']) - np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4185']) -
+                                    np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4397']) - np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4398']))
+
+                    if float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK2170']) < 5000000:  
+                        temp_val_ins = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKKX46']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKKX47']))
+                        if temp_val_ins ==0:
+                            temp_val_ins = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC887']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC386']) + 
+                                            np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC014']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC387']))
+                    else:
+                        temp_val_ins = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC887']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC386']) + 
+                                        np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC014']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC387']))
+                    
+                    temp_val_inv = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4070']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC886']) + 
+                                    np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC888']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB491']) + 
+                                    np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB492']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB493']))
+                    
+                    temp_val_treas = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB488']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB489']) + 
+                                      np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4060']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4069']) + 
+                                      np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKA220']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB496']) +
+                                      np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK3521']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK3196']))
+                    
+                    #print(t,': ',temp_val)
+                    #print('final:',temp_val)
+                    #print()                               
+                    df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'traditional_revenue']   = temp_val
+                    df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'deposit_revenue']       = temp_val_dep
+                    df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'insurance_revenue']     = temp_val_ins
+                    df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'investment_revenue']    = temp_val_inv
+                    df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'treasury_revenue']      = temp_val_treas
+
+                except:
+                    pass
+            else:
+                
+                # determine if bank was operating in previous period before using difference formula
+                if df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4340'].empty == True:
+
+                    try:
+                        temp_val =  np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4435']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4436']) + \
+                                    np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKF821']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4059']) + \
+                                    np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4065']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4115']) + \
+                                    np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4020']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4518']) - \
+                                    np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4230']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK8560']) + \
+                                    np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK8561']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4042'])
+                                    
+                        temp_val_dep = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4483']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC013']) + 
+                                        np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC015']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC016']) + 
+                                        np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKT047']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKF555']) - 
+                                        np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKHK03']) - np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKHK04']) - 
+                                        np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK6761']) - np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4172']) - 
+                                        np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4180']) - np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4185']) -
+                                        np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4397']) - np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4398']))
+
+                        if float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK2170']) < 5000000:  
+                            temp_val_ins = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKKX46']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKKX47']))
+                            if temp_val_ins ==0:
+                                temp_val_ins = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC887']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC386']) + 
+                                                np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC014']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC387']))
+                        else:
+                            temp_val_ins = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC887']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC386']) + 
+                                            np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC014']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC387']))
+
+                        temp_val_inv = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4070']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC886']) + 
+                                        np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC888']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB491']) + 
+                                        np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB492']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB493']))
+
+                        temp_val_treas = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB488']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB489']) + 
+                                              np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4060']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4069']) + 
+                                              np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKA220']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB496']) +
+                                              np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK3521']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK3196']))
+
+                        #print(t,': ',temp_val)
+                        #print('final:',temp_val)
+                        #print()                                                                      
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'traditional_revenue']   = temp_val
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'deposit_revenue']       = temp_val_dep
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'insurance_revenue']     = temp_val_ins
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'investment_revenue']    = temp_val_inv
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'treasury_revenue']      = temp_val_treas
+
+                    except:
+                        pass
+                    
+                else: 
+                    try:
+                        temp_val_one =  np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4435']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4436']) + \
+                                        np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKF821']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4059']) + \
+                                        np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4065']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4115']) + \
+                                        np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4020']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4518']) - \
+                                        np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4230']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK8560']) + \
+                                        np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK8561']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4042'])
+    
+                        temp_val_two =  np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4435']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4436']) + \
+                                        np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKF821']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4059']) + \
+                                        np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4065']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4115']) + \
+                                        np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4020']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4518']) - \
+                                        np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4230']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK8560']) + \
+                                        np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK8561']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4042'])
+                        
+                        temp_val_dep_one = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4483']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC013']) + 
+                                            np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC015']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC016']) + 
+                                            np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKT047']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKF555']) - 
+                                            np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKHK03']) - np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKHK04']) - 
+                                            np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK6761']) - np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4172']) - 
+                                            np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4180']) - np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4185']) -
+                                            np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4397']) - np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4398']))
+
+                        temp_val_dep_two = (np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4483']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC013']) + 
+                                            np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC015']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC016']) + 
+                                            np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKT047']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKF555']) - 
+                                            np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKHK03']) - np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKHK04']) - 
+                                            np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK6761']) - np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4172']) - 
+                                            np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4180']) - np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4185']) -
+                                            np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4397']) - np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4398']))
+
+                        if float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK2170']) < 5000000:  
+                            temp_val_ins_one = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKKX46']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKKX47']))
+                            temp_val_ins_two = (np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKKX46']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKKX47']))
+                            if temp_val_ins_one ==0:
+                                temp_val_ins_one = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC887']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC386']) + 
+                                                    np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC014']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC387']))
+        
+                                temp_val_ins_two = (np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC887']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC386']) + 
+                                                    np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC014']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC387']))
+                        else:
+                            temp_val_ins_one = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC887']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC386']) + 
+                                                np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC014']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC387']))
+    
+                            temp_val_ins_two = (np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC887']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC386']) + 
+                                                np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC014']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC387']))
+
+                        temp_val_inv_one = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4070']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC886']) + 
+                                            np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC888']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB491']) + 
+                                            np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB492']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB493']))
+        
+                        temp_val_inv_two = (np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4070']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC886']) + 
+                                            np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC888']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKB491']) + 
+                                            np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKB492']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKB493']))
+
+                        temp_val_treas_one = (np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB488']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB489']) + 
+                                              np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4060']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4069']) + 
+                                              np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKA220']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB496']) +
+                                              np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK3521']) + np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK3196']))
+
+                        temp_val_treas_two = (np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKB488']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKB489']) + 
+                                              np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4060']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4069']) + 
+                                              np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKA220']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKB496']) +
+                                              np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK3521']) + np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK3196']))
+
+                        #print(t,': ',temp_val_one)
+                        #print('final:',temp_val_one-temp_val_two)
+                        #print()                                                                      
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'traditional_revenue']   = temp_val_one - temp_val_two
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'deposit_revenue']       = temp_val_dep_one - temp_val_dep_two
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'insurance_revenue']     = temp_val_ins_one - temp_val_ins_two
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'investment_revenue']    = temp_val_inv_one - temp_val_inv_two
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'treasury_revenue']      = temp_val_treas_one - temp_val_treas_two
+
+                    except:
+                        pass
+
+            if quart < 3:
+                quart = quart + 1
+            else:
+                quart = 0
+
+#df[ df.RSSD9001 == df.RSSD9001.unique()[0] ][['RSSD9017','RSSD9001','date','traditional_revenue']]
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#                                           # 
+#   Filtering Other Non-Interest Revenue    #
+#                                           # 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+# simple version (split other non-interest equally across all the activities)
+
+
+# trad_keyword = [ 'Loan', 'Lease', 'Mortgage','Auto','Commitment','LOAN', 'LEASE', 'MORTGAGE','AUTO','COMMITMENT' ]
+# dep_keyword = [ 'Deposit', 'Card','Acceptance','DEPOSIT', 'CARD','ACCEPTANCE']
+# ins_keyword = ['Insurance','INSURANCE']
+# inv_keyword = ['Ipo', 'Offering', 'Derivative', 'Management','Spread','IPO', 'OFFERING', 'DERIVATIVE', 'MANAGEMENT','SPREAD']
+# treas_keyword = ['Investment','INVESTMENT']
+
+# first compute quartlery revenue for each bank, each quarter
+for idx, bank in enumerate( df.RSSD9001.unique() ):
+
+    print('Traditional Bank:',idx,' out of ',len(df.RSSD9001.unique()))
+    quart = 1
+
+    for at, t in enumerate( df.date.unique() ):
+        if at ==0:
+            try:
+                temp_val = np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB497']) - \
+                           np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC013']) - \
+                           np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC014']) - \
+                           np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC016']) - \
+                           np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4042']) - \
+                           np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC015']) - \
+                           np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKF555']) - \
+                           np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKT047'])     
+                           
+                df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'traditional_revenue']   = df[ (df.date==t) & (df.RSSD9001 == bank)]['traditional_revenue'] + temp_val/5
+                df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'deposit_revenue']       = df[ (df.date==t) & (df.RSSD9001 == bank)]['deposit_revenue'] + temp_val/5
+                df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'insurance_revenue']     = df[ (df.date==t) & (df.RSSD9001 == bank)]['insurance_revenue'] + temp_val/5
+                df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'investment_revenue']    = df[ (df.date==t) & (df.RSSD9001 == bank)]['investment_revenue'] + temp_val/5
+                df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'treasury_revenue']      = df[ (df.date==t) & (df.RSSD9001 == bank)]['treasury_revenue'] + temp_val/5
+                
+            except:
+                pass
+
+        else:
+            if quart == 0:
+                try:
+                    temp_val = np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB497']) - \
+                               np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC013']) - \
+                               np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC014']) - \
+                               np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC016']) - \
+                               np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4042']) - \
+                               np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC015']) - \
+                               np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKF555']) - \
+                               np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKT047'])    
+                               
+                    df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'traditional_revenue']   = df[ (df.date==t) & (df.RSSD9001 == bank)]['traditional_revenue'] + temp_val/5
+                    df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'deposit_revenue']       = df[ (df.date==t) & (df.RSSD9001 == bank)]['deposit_revenue'] + temp_val/5
+                    df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'insurance_revenue']     = df[ (df.date==t) & (df.RSSD9001 == bank)]['insurance_revenue'] + temp_val/5
+                    df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'investment_revenue']    = df[ (df.date==t) & (df.RSSD9001 == bank)]['investment_revenue'] + temp_val/5
+                    df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'treasury_revenue']      = df[ (df.date==t) & (df.RSSD9001 == bank)]['treasury_revenue'] + temp_val/5
+                except:
+                    pass
+
+            else:
+                
+                # determine if bank was operating in previous period before using difference formula
+                if df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4340'].empty == True:
+
+                    try:
+                        temp_val = np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB497']) - \
+                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC013']) - \
+                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC014']) - \
+                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC016']) - \
+                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4042']) - \
+                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC015']) - \
+                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKF555']) - \
+                                   np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKT047'])    
+                                   
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'traditional_revenue']   = df[ (df.date==t) & (df.RSSD9001 == bank)]['traditional_revenue'] + temp_val/5
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'deposit_revenue']       = df[ (df.date==t) & (df.RSSD9001 == bank)]['deposit_revenue'] + temp_val/5
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'insurance_revenue']     = df[ (df.date==t) & (df.RSSD9001 == bank)]['insurance_revenue'] + temp_val/5
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'investment_revenue']    = df[ (df.date==t) & (df.RSSD9001 == bank)]['investment_revenue'] + temp_val/5
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'treasury_revenue']      = df[ (df.date==t) & (df.RSSD9001 == bank)]['treasury_revenue'] + temp_val/5
+                    except:
+                        pass
+                            
+                else: 
+                    try:
+                        temp_val_one = np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKB497']) - \
+                                       np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC013']) - \
+                                       np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC014']) - \
+                                       np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC016']) - \
+                                       np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4042']) - \
+                                       np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKC015']) - \
+                                       np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKF555']) - \
+                                       np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCKT047'])    
+    
+                        temp_val_two = np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKB497']) - \
+                                       np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC013']) - \
+                                       np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC014']) - \
+                                       np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC016']) - \
+                                       np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4042']) - \
+                                       np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKC015']) - \
+                                       np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKF555']) - \
+                                       np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCKT047'])        
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'traditional_revenue']   = df[ (df.date==t) & (df.RSSD9001 == bank)]['traditional_revenue'] + (temp_val_one-temp_val_two)/5
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'deposit_revenue']       = df[ (df.date==t) & (df.RSSD9001 == bank)]['deposit_revenue'] + (temp_val_one-temp_val_two)/5
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'insurance_revenue']     = df[ (df.date==t) & (df.RSSD9001 == bank)]['insurance_revenue'] + (temp_val_one-temp_val_two)/5
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'investment_revenue']    = df[ (df.date==t) & (df.RSSD9001 == bank)]['investment_revenue'] + (temp_val_one-temp_val_two)/5
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'treasury_revenue']      = df[ (df.date==t) & (df.RSSD9001 == bank)]['treasury_revenue'] + (temp_val_one-temp_val_two)/5
+                    except:
+                        pass
+                    
+            if quart < 3:
+                quart = quart + 1
+            else:
+                quart = 0
+
+# annualize the non-interest expense category and reported net income
+df['Expense'] = 0 
+df['Net_Income'] = 0
+
+for idx, bank in enumerate( df.RSSD9001.unique() ):
+
+    quart = 1
+
+    for at, t in enumerate( df.date.unique() ):
+        if at ==0:
+            try:                           
+                df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'Expense']   = np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4093'])
+                df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'Net_Income']   = np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4301'])
+            except:
+                pass
+
+        else:
+            if quart == 0:
+                try:                               
+                    df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'Expense']   =  np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4093'])
+                    df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'Net_Income']   =  np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4301'])
+                except:
+                    pass
+
+            else:
+                
+                # determine if bank was operating in previous period before using difference formula
+                if df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4340'].empty == True:
+
+                    try:
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'Expense']   =  np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4093'])
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'Net_Income']   =  np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4301'])
+                    except:
+                        pass
+                            
+                else: 
+                    try:
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'Expense']      =  np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4093']) -  np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4093'])
+                        df.loc[ (df.date==t) & (df.RSSD9001 == bank), 'Net_Income']      =  np.float(df[ (df.date==t) & (df.RSSD9001 == bank) ]['BHCK4301']) -  np.float(df[ (df.date==df.date.unique()[at-1]) & (df.RSSD9001 == bank) ]['BHCK4301'])
+                    except:
+                        pass
+                    
+            if quart < 3:
+                quart = quart + 1
+            else:
+                quart = 0
+
+
+
+# export firm id, name, date, total assets, net income, traditional bank revenues, insurance revenues, investment revenues, deposit/payment revenues, treasury revenues,
+#   and non-interest expenses
+ 
+
+df['Bank_ID'] = df['RSSD9001']
+df['Bank_Name'] = df['RSSD9017']
+df['Assets'] = df['BHCK2170']
+
+# check that accounting identity holds for reported net income
+
+df['NI_computed'] = 0
+df['NI_Residual'] = 0
+
+#for each bank
+for idx, bank in enumerate( df.Bank_ID.unique() ):
+
+    # compute residual between reported net income and ( revenues - expenses )
+    computed_ni = df[df.Bank_ID == bank]['traditional_revenue'] + df[df.Bank_ID == bank]['deposit_revenue'] + \
+                  df[df.Bank_ID == bank]['insurance_revenue']   + df[df.Bank_ID == bank]['investment_revenue'] + \
+                  df[df.Bank_ID == bank]['treasury_revenue']    - df[df.Bank_ID == bank]['Expense']
+
+    df.loc[df.Bank_ID == bank,'NI_computed'] = computed_ni            
+    df.loc[df.Bank_ID == bank,'NI_Residual'] = computed_ni - df[df.Bank_ID == bank]['Net_Income']
+
+    
+
+# export dataframe
+df[['Bank_ID','Bank_Name','date','Assets','Net_Income','Expense',
+    'traditional_revenue','deposit_revenue','insurance_revenue','investment_revenue','treasury_revenue']].to_csv('revenue_data.csv')
+
+
+
+
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#                                              # 
+#   Compute Business Line Quantities/Stocks    #
+#                                              # 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+
+#
+#
+#   Create firm-level measures of business line revenues    
+#
+#
+#   (1) Traditional Banking
+#       (a) Loans and leases (5369 + B528 + B529)
+#
+#   (2) Deposits
+#       (a) deposits (6631 + 6636 + BHFN 6631 + BHFN 6636)
+#       (b) fed funds and repo (BHDM B993 + B995)
+#       (c) Other borrowed money (3190)
+#
+#   (3) Insurance Banking*
+#       (a) Property and casualty underwriting assets (C244)
+#       (b) Life and health underwriting assets (C248)
+#
+#   (4) Investment Banking*
+#       (a) Underwriting volume (RISK M408 from FR Y-15)
+#
+#   (5) Trading/Treasury
+#       (a) cash (0081 + 0395 + 0397)
+#       (b) securities (JJ34 + 1773 + JA22)
+#       (c) fed funds and reverse repo (BHDM B987 + B989)
+#       (d) trading assets (3545)
+
+
+
+
+# merge FR Y-15 data with FR Y-9C data
+#os.chdir('/home/pando004/Desktop/BankData/FRY15')
+#df15 = pd.read_csv('fr15data.csv')
+df15 = pd.read_csv('Data/fr15data.csv')
+
+df15['date'] = df15['date'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d'))
+df15 = df15.sort_values(by=['date'])
+
+# drop 2015 Q4 observations
+df15 = df15[ ~(df15['date'] <= df15.date.unique()[0] ) ]
+
+# collect number of unique IDs in FRY15 data, see how many match with FRY9
+fry15_ids = df15.id.unique()
+fr9_ids = set( df.RSSD9001.unique() )
+it = 0
+for at,idx in enumerate(df15.id.unique()):
+    if idx in fr9_ids:
+        it = it + 1
+print(100*it/len(fry15_ids),'% of FRY15 banks in FRY9 dataset')
+print()
+print(100*(1-it/len(df.RSSD9001.unique())),'% of FRY9 banks not included in FRY15 reports')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#~~~~~~~~~~~~~~~~~~~~~~#
+#                      # 
+#   Other data work    #
+#                      # 
+#~~~~~~~~~~~~~~~~~~~~~~#
+# construct aggregate revenue, total cost and net income measures
+agg_revenue = []
+agg_cost = []
+other_inc = []
+reported_ni = []
+taxes = []
+
+quart = 0
+for at, t in enumerate( df.date.unique() ):
+
+    # if first quarter, just report the accumulated flows
+    if quart == 0:
+        agg_revenue.append(  np.nansum( df[ df.date ==t ]['BHCK4107'] - df[ df.date ==t ]['BHCK4230'] + df[ df.date ==t ]['BHCK4079'] + 
+                                       df[ df.date ==t ]['BHCK3521'] + df[ df.date ==t ]['BHCK3196'] - df[ df.date ==t ]['BHCK4230']  )/(1000*1000) )
+
+        agg_cost.append(  np.nansum( df[ df.date ==t ]['BHCK4073'] + df[ df.date ==t ]['BHCK4093'] )/(1000*1000) )        
+
+        other_inc.append(  np.nansum( - df[ df.date ==t ]['BHCK4302'] - df[ df.date ==t ]['BHCKG103'] ) /(1000*1000) )    
+        
+        reported_ni.append( np.nansum( df[ df.date ==t ]['BHCK4340'] )/(1000*1000) )    
+
+    else:        
+        agg_revenue.append( np.nansum( df[ df.date ==t ]['BHCK4107'] - df[ df.date ==t ]['BHCK4230'] + df[ df.date ==t ]['BHCK4079'] + 
+                                       df[ df.date ==t ]['BHCK3521'] + df[ df.date ==t ]['BHCK3196'] - df[ df.date ==t ]['BHCK4230']  )/(1000*1000)  - 
+                           np.nansum( df[ df.date == df.date.unique()[at-1] ]['BHCK4107'] - df[ df.date == df.date.unique()[at-1] ]['BHCK4230'] + df[ df.date == df.date.unique()[at-1] ]['BHCK4079'] +
+                           df[ df.date == df.date.unique()[at-1] ]['BHCK3521'] + df[ df.date == df.date.unique()[at-1] ]['BHCK3196'] - df[ df.date == df.date.unique()[at-1] ]['BHCK4230'] )/(1000*1000) )
+
+        agg_cost.append( np.nansum( df[ df.date ==t ]['BHCK4073'] + df[ df.date ==t ]['BHCK4093'] )/(1000*1000)  - 
+                           np.nansum( df[ df.date == df.date.unique()[at-1] ]['BHCK4073'] + df[ df.date == df.date.unique()[at-1] ]['BHCK4093'] )/(1000*1000) )
+
+        other_inc.append( np.nansum( - df[ df.date ==t ]['BHCK4302'] - df[ df.date ==t ]['BHCKG103'] )/(1000*1000)  - np.nansum( - df[ df.date == df.date.unique()[at-1] ]['BHCK4302'] - df[ df.date == df.date.unique()[at-1] ]['BHCKG103'])/(1000*1000) )
+
+        reported_ni.append( np.nansum( df[ df.date ==t ]['BHCK4340']  )/(1000*1000)  - 
+                           np.nansum( df[ df.date == df.date.unique()[at-1] ]['BHCK4340'] )/(1000*1000) )
+        
+    if quart < 3:
+        quart = quart + 1
+    else:
+        quart = 0
+
+# other income includes (i) income tax and net income which is attributed to minority interests
+#   there are other categories (such as gains on equity securities not held for trading or discountinued operations but they only start around 2015)
+plt.close('all')
+cut_off = 0
+plt.figure(1)
+plt.plot(df.date.unique()[cut_off:],agg_revenue[cut_off:],lw=3,label='Revenue')
+plt.plot(df.date.unique()[cut_off:],agg_cost[cut_off:],lw=3,label='Expenses')
+plt.plot(df.date.unique()[cut_off:],other_inc[cut_off:],lw=3,label='Other Net Income')
+plt.legend(fontsize=15)
+plt.title('US Banking Aggregates',fontsize=15)
+plt.xlabel('Date',fontsize=15)
+plt.ylabel('$ Billion',fontsize=15)
+
 
 # total revenue = interest revenue + non-interest revenue + realized gains on securitie
 df['interest_revenue'] = df['BHCK4107']

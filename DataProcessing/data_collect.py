@@ -20,7 +20,7 @@ os.chdir('/home/ryan0463/Documents/Research/BankBusinessLines')
 Line Items
 """
 #RIAD tags
-rssd = ['9999','9002'] # filing date, top holding id
+rssd = ['9999','9002','9158','9010','9017'] # filing date, top holding id
 
 text = [
         # non-interest revenue item names
@@ -79,7 +79,10 @@ bhck = [
         '3817', 'C252','8765','A127','8726',
         
         # non-interest revenues 
-        '8562','8563','8564'
+        '8562','8563','8564',
+        
+        # filing date
+        '9999'
         ]
 
 bhcb = [
@@ -235,4 +238,5 @@ GenDF[ BHDM_items ] = GenDF[ BHDM_items ].apply( pd.to_numeric )
 GenDF[ BHCA_items ] = GenDF[ BHCA_items ].apply( pd.to_numeric )
 GenDF[ BHCW_items ] = GenDF[ BHCW_items ].apply( pd.to_numeric )
 
+#GenDF.to_csv('frdata.csv')
 GenDF.to_csv('Data/frdata.csv')
