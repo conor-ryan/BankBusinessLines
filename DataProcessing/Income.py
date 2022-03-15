@@ -21,7 +21,7 @@ df['date'] = pd.to_datetime( df.RSSD9999, format='%Y%m%d')
 df = df.sort_values(by=['date'])
 
 # drop dataframe dates to match market size data
-df = df[ ~(df['date'] < df.date.unique()[86] ) ]
+df = df[ ~(df['date'] < df.date.unique()[117] ) ]  # drop all observations before 2015 Q4
 
 # drop all observations which report zero net income 
 df = df.dropna(subset=['BHCK4340'])
@@ -33,14 +33,16 @@ df[['BHCK4435','BHCK4436','BHCKF821','BHCK4059','BHCK4065','BHCK4115','BHCK4020'
     'BHCK4070','BHCKC886','BHCKC888','BHCKB491','BHCKB492','BHCKB493',
     'BHCKB488','BHCKB489','BHCK4060','BHCK4069','BHCKA220','BHCKB496','BHCK3521','BHCK3196',
     'BHCKB497','BHCK8562','BHCK8563','BHCK8564',
-    'BHCK4093']] = (
+    'BHCK4093','BHCKJA22',
+    'BHCK5369','BHCKB529','BHDM6631','BHDM6636','BHFN6631','BHFN6636','BHDMB993','BHCKB995','BHCK3190','BHCKC244','BHCKC248','BHCK0081','BHCK0395','BHCK0397','BHCKJJ34','BHCK1773','BHDMB987','BHCKB989','BHCK3545']] = (
 df[['BHCK4435','BHCK4436','BHCKF821','BHCK4059','BHCK4065','BHCK4115','BHCK4020','BHCK4518','BHCK4230','BHCK8560','BHCK8561','BHCK4042',
     'BHCKHK03','BHCKHK04','BHCK6761','BHCK4172','BHCK4180','BHCK4185','BHCK4397','BHCK4398','BHCK4483','BHCKC013','BHCKC015','BHCKC016','BHCKT047','BHCKF555',
     'BHCKC887','BHCKC386','BHCKC014','BHCKC387','BHCKKX46','BHCKKX47',
     'BHCK4070','BHCKC886','BHCKC888','BHCKB491','BHCKB492','BHCKB493',
     'BHCKB488','BHCKB489','BHCK4060','BHCK4069','BHCKA220','BHCKB496','BHCK3521','BHCK3196',
     'BHCKB497','BHCK8562','BHCK8563','BHCK8564',
-    'BHCK4093']].fillna(0) )
+    'BHCK4093','BHCKJA22',
+    'BHCK5369','BHCKB529','BHDM6631','BHDM6636','BHFN6631','BHFN6636','BHDMB993','BHCKB995','BHCK3190','BHCKC244','BHCKC248','BHCK0081','BHCK0395','BHCK0397','BHCKJJ34','BHCK1773','BHDMB987','BHCKB989','BHCK3545']].fillna(0) )
 
 
 #
@@ -110,44 +112,86 @@ df[['BHCK4435','BHCK4436','BHCKF821','BHCK4059','BHCK4065','BHCK4115','BHCK4020'
 
 #
 #
-#   Filter out smaller banks
+#
+#   Only keep banks which show up in FR Y-15
 #
 #
-# initialize list of bank indices and threshold number N
-top_idx = []
-topN = 50
 
-# for each quarter
-for at,t in enumerate(df.date.unique()):
+# merge FR Y-15 data with FR Y-9C data
+#os.chdir('/home/pando004/Desktop/BankData/FRY15')
+#df15 = pd.read_csv('fr15data.csv')
+df15 = pd.read_csv('Data/fr15data.csv')
 
-    # determine top N firms by revenue
-    rev_idx = list( (  df[ df.date ==t ]['BHCK4107'] - df[ df.date ==t ]['BHCK4230'] + df[ df.date ==t ]['BHCK4079'] + df[ df.date ==t ]['BHCK3521'] + df[ df.date ==t ]['BHCK3196'] ).nlargest(topN).index )
+df15['date'] = df15['date'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d'))
+df15 = df15.sort_values(by=['date'])
 
-    # recover bank id's
-    rev_list = []
+# drop 2015 Q4 observations
+#df15 = df15[ ~(df15['date'] <= df15.date.unique()[0] ) ]
 
-    for i in range(topN):
-        try:
-            rev_list.append( df[df.index == rev_idx[i] ]['RSSD9001'].unique()[0] )
-        except:
-            pass
+# collect number of unique IDs in FRY15 data, see how many match with FRY9
+fry15_ids = df15.id.unique()
+fry9_ids = set( df.RSSD9001.unique() )
+it = 0
+collect_idx = []
+for at,idx in enumerate(df15.id.unique()):
+    if idx in fry9_ids:
+        collect_idx.append( idx )
+        it = it + 1
+print(100*it/len(fry15_ids),'% of FRY15 banks in FRY9 dataset')
+print()
 
-    # append list with unique union set
-    top_idx = list( set(rev_list).union( set(top_idx) ) )
-    #top_idx = list( set(con_list).union( set(com_list),set(dep_list),set(ins_list), set(top_idx) ) )
+
+
+df_temp = df[ df.RSSD9001 == df15.id.unique()[0] ]
+
+for i in range(1,len(df15.id.unique())):    
+    df_temp1 = df[ df.RSSD9001 == df15.id.unique()[i] ]
     
-print('Collected a total of', len(top_idx),' bank IDs')
+    df_temp = df_temp.append( df_temp1, ignore_index = True )
+df = df_temp.copy()
 
-#create subset dataframe using bank id's
-for i in range(len(top_idx)):
 
-    if i ==0:
-        temp_df = df[df.RSSD9001 == top_idx[i]]
-    else:
-        temp_df = temp_df.append( df[df.RSSD9001 == top_idx[i]] )
 
-df = temp_df.copy()
-df = df.sort_values(by=['date'])
+# #
+# #
+# #   Filter out smaller banks
+# #
+# #
+# # initialize list of bank indices and threshold number N
+# top_idx = []
+# topN = 50
+
+# # for each quarter
+# for at,t in enumerate(df.date.unique()):
+
+#     # determine top N firms by revenue
+#     rev_idx = list( (  df[ df.date ==t ]['BHCK4107'] - df[ df.date ==t ]['BHCK4230'] + df[ df.date ==t ]['BHCK4079'] + df[ df.date ==t ]['BHCK3521'] + df[ df.date ==t ]['BHCK3196'] ).nlargest(topN).index )
+
+#     # recover bank id's
+#     rev_list = []
+
+#     for i in range(topN):
+#         try:
+#             rev_list.append( df[df.index == rev_idx[i] ]['RSSD9001'].unique()[0] )
+#         except:
+#             pass
+
+#     # append list with unique union set
+#     top_idx = list( set(rev_list).union( set(top_idx) ) )
+#     #top_idx = list( set(con_list).union( set(com_list),set(dep_list),set(ins_list), set(top_idx) ) )
+    
+# print('Collected a total of', len(top_idx),' bank IDs')
+
+# #create subset dataframe using bank id's
+# for i in range(len(top_idx)):
+
+#     if i ==0:
+#         temp_df = df[df.RSSD9001 == top_idx[i]]
+#     else:
+#         temp_df = temp_df.append( df[df.RSSD9001 == top_idx[i]] )
+
+# df = temp_df.copy()
+# df = df.sort_values(by=['date'])
 
 
 
@@ -569,9 +613,76 @@ for idx, bank in enumerate( df.RSSD9001.unique() ):
 
 
 
-# export firm id, name, date, total assets, net income, traditional bank revenues, insurance revenues, investment revenues, deposit/payment revenues, treasury revenues,
-#   and non-interest expenses
- 
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#                                              # 
+#   Compute Business Line Quantities/Stocks    #
+#                                              # 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+
+#
+#
+#   Create firm-level measures of business line quantities    
+#
+#
+#   (1) Traditional Banking
+#       (a) Loans and leases (5369 + B529)
+#
+#   (2) Deposits
+#       (a) deposits (BHDM 6631 + BHDM 6636 + BHFN 6631 + BHFN 6636)
+#       (b) fed funds and repo (BHDM B993 + BHCK B995)
+#       (c) Other borrowed money (BHCK 3190)
+#
+#   (3) Insurance Banking*
+#       (a) Property and casualty underwriting assets (C244)
+#       (b) Life and health underwriting assets (C248)
+#
+#   (4) Investment Banking*
+#       (a) Underwriting volume (RISK M408 from FR Y-15)
+#
+#   (5) Trading/Treasury
+#       (a) cash (0081 + 0395 + 0397)
+#       (b) securities (JJ34 + 1773 + JA22)
+#       (c) fed funds and reverse repo (BHDM B987 + B989)
+#       (d) trading assets (3545)
+
+
+df['traditional_q'] = df['BHCK5369'] + df['BHCKB529']
+df['deposits_q']    = df['BHDM6631'] + df['BHDM6636'] + df['BHFN6631'] + df['BHFN6636'] + df['BHDMB993'] + df['BHCKB995'] + df['BHCK3190']
+df['insurance_q']   = df['BHCKC244'] + df['BHCKC248']
+df['investment_q']  = 0
+df['treasury_q']    = df['BHCK0081'] + df['BHCK0395'] + df['BHCK0397'] + df['BHCKJJ34'] + df['BHCK1773'] + df['BHCKJA22'] + df['BHDMB987'] + df['BHCKB989'] + df['BHCK3545']
+
+
+# create temp dataframe 
+df_temp = pd.DataFrame()
+
+# some fry 15 periods missing, relative to FR Y9
+for idx,bank in enumerate(df.RSSD9001.unique()):
+    
+    print('Bank:',idx,' out of',len(df.RSSD9001.unique()))
+    
+    # find the set of dates which overlap
+    keep_dates = list( set(df15[ df15.id == bank]['date']) & set(df[ df.RSSD9001 == bank]['date']) )
+    keep_dates.sort()
+    
+    for i in range(len(keep_dates)):
+        
+        df.loc[ (df.RSSD9001 == bank) & (df.date == keep_dates[i]), 'investment_q'] = float(df15[ (df15.id == bank) & (df15.date == keep_dates[i]) ]['underwriting']) + float(df15[ (df15.id == bank) & (df15.date == keep_dates[i]) ]['custody']) + float(df15[ (df15.id == bank) & (df15.date == keep_dates[i]) ]['payments'])
+        
+        df_temp = df_temp.append( df[ (df.RSSD9001 == bank) & (df.date == keep_dates[i]) ])
+
+df = df_temp.copy()
+
+
+# compute prices 
+df['traditional_p'] = df['traditional_revenue']/df['traditional_q']
+df['deposits_p']     = df['deposit_revenue']    /df['deposits_q']
+df['insurance_p']   = df['insurance_revenue']  /df['insurance_q']
+df['investment_p']  = df['investment_revenue'] /df['investment_q']
+df['treasury_p']    = df['treasury_revenue']  /df['treasury_q']
+
 
 df['Bank_ID'] = df['RSSD9001']
 df['Bank_Name'] = df['RSSD9017']
@@ -593,98 +704,92 @@ for idx, bank in enumerate( df.Bank_ID.unique() ):
     df.loc[df.Bank_ID == bank,'NI_computed'] = computed_ni            
     df.loc[df.Bank_ID == bank,'NI_Residual'] = computed_ni - df[df.Bank_ID == bank]['Net_Income']
 
-    
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+#                                #
+#   Create Data Summary Table    #
+#                                #
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+
+# row variables: Q_deposit, Q_traditional, Q_insurance, Q_investment, Q_treasury,
+#                p_deposit, p_traditional, p_insurance, p_investment, p_treasury,
+#                net income/equity (roe), costs/assets
+#
+#   column variables: N, mean, 10th, median, 90th, 99th percentile
+
+holder  = np.zeros(( 13, 6 ))
+
+holder[0,:] = np.array(( len(df.deposits_q), int(np.mean(df.deposits_q)/(1000*1000)), int(np.quantile(df.deposits_q,.1)/(1000*1000)), int(np.quantile(df.deposits_q,.5)/(1000*1000)), int(np.quantile(df.deposits_q,.9)/(1000*1000)), int(np.quantile(df.deposits_q,.99)/(1000*1000)) ))
+holder[1,:] = np.array(( len(df.traditional_q), int(np.mean(df.traditional_q)/(1000*1000)), int(np.quantile(df.traditional_q,.1)/(1000*1000)), int(np.quantile(df.traditional_q,.5)/(1000*1000)), int(np.quantile(df.traditional_q,.9)/(1000*1000)), int(np.quantile(df.traditional_q,.99)/(1000*1000)) ))
+holder[2,:] = np.array(( len(df.insurance_q), int(np.mean(df.insurance_q)/(1000*1000)), int(np.quantile(df.insurance_q,.1)/(1000*1000)), int(np.quantile(df.insurance_q,.5)/(1000*1000)), int(np.quantile(df.insurance_q,.9)/(1000*1000)), int(np.quantile(df.insurance_q,.99)/(1000*1000)) ))
+holder[3,:] = np.array(( len(df.investment_q), int(np.mean(df.investment_q)/(1000*1000)), int(np.quantile(df.investment_q,.1)/(1000*1000)), int(np.quantile(df.investment_q,.5)/(1000*1000)), int(np.quantile(df.investment_q,.9)/(1000*1000)), int(np.quantile(df.investment_q,.99)/(1000*1000)) ))
+holder[4,:] = np.array(( len(df.treasury_q), int(np.mean(df.treasury_q)/(1000*1000)), int(np.quantile(df.treasury_q,.1)/(1000*1000)), int(np.quantile(df.treasury_q,.5)/(1000*1000)), int(np.quantile(df.treasury_q,.9)/(1000*1000)), int(np.quantile(df.treasury_q,.99)/(1000*1000)) ))
+
+holder[5,:] = np.array(( len(df.deposits_p), 100*100*np.mean(df.deposits_p), round(100*100*np.quantile(df.deposits_p,.1),1), round(100*100*np.quantile(df.deposits_p,.5),1), round(100*100*np.quantile(df.deposits_p,.9),1), round(100*100*np.quantile(df.deposits_p,.99),1) ))
+holder[6,:] = np.array(( len(df.traditional_p), round(100*100*np.mean(df.traditional_p),1), round(100*100*np.quantile(df.traditional_p,.1),1), round(100*100*np.quantile(df.traditional_p,.5),1), round(100*100*np.quantile(df.traditional_p,.9),1), round(100*100*np.quantile(df.traditional_p,.99),1) ))
+holder[7,:] = np.array(( len(df[ df.insurance_q > 0]['insurance_p']), round(100*100*np.mean(df[ df.insurance_q > 0]['insurance_p']),1), round(100*100*np.quantile(df[ df.insurance_q > 0]['insurance_p'],.1),1), round(100*100*np.quantile(df[ df.insurance_q > 0]['insurance_p'],.5),1), round(100*100*np.quantile(df[ df.insurance_q > 0]['insurance_p'],.9),1), round(100*100*np.quantile(df[ df.insurance_q > 0]['insurance_p'],.99),1) ))
+holder[8,:] = np.array(( len(df[ df.investment_q > 0]['investment_p']), round(100*100*np.mean(df[ df.investment_q > 0]['investment_p']),1), round(100*100*np.quantile(df[ df.investment_q > 0]['investment_p'],.1),1), round(100*100*np.quantile(df[ df.investment_q > 0]['investment_p'],.5),1), round(100*100*np.quantile(df[ df.investment_q > 0]['investment_p'],.9),1), round(100*100*np.quantile(df[ df.investment_q > 0]['investment_p'],.99),1) ))
+holder[9,:] = np.array(( len(df.treasury_p), round(100*100*np.mean(df.treasury_p),1), round(100*100*np.quantile(df.treasury_p,.1),1), round(100*100*np.quantile(df.treasury_p,.5),1), round(100*100*np.quantile(df.treasury_p,.9),1), round(100*100*np.quantile(df.treasury_p,.99),1) ))
+
+holder[10,:] = np.array(( len(df.Net_Income/df.BHCKG105), round(100*100*np.mean(df.Net_Income/df.BHCKG105)), round(100*100**np.quantile(df.Net_Income/df.BHCKG105,.1),1),round(100*100**np.quantile(df.Net_Income/df.BHCKG105,.5),1), round(100*100**np.quantile(df.Net_Income/df.BHCKG105,.9),1), round(100*100**np.quantile(df.Net_Income/df.BHCKG105,.99),1)  ))
+holder[11,:] = np.array(( len(df.Expense/df.Assets), round(100*100*np.mean(df.Expense/df.Assets)), round(100*100**np.quantile(df.Expense/df.Assets,.1),1),round(100*100**np.quantile(df.Expense/df.Assets,.5),1), round(100*100**np.quantile(df.Expense/df.Assets,.9),1), round(100*100**np.quantile(df.Expense/df.Assets,.99),1)  ))
+holder[12,:] = np.array(( len(df.Assets), int(np.mean(df.Assets)/(1000*1000)), int(np.quantile(df.Assets,.1)/(1000*1000)), int(np.quantile(df.Assets,.5)/(1000*1000)), int(np.quantile(df.Assets,.9)/(1000*1000)), int(np.quantile(df.Assets,.99)/(1000*1000)) ))
+
+d = {'Objects': np.array(( 'Total Deposits (billions)', 'Traditional Lending (billions)', 'Insured Assets (billions)', 'Investment Activity (billions)', 'Treasury Assets (billions)',
+                            'Deposit Rate','Lending Rate','Insurance Premium','Investment Fee','Treasury Return',
+                            'Return on Equity', 'Total Cost per Asset','Total Assets (billions)')),
+     'N': holder[:,0],
+     'Mean': holder[:,1],
+     '10p': holder[:,2],
+     'Median': holder[:,3],
+     '90p': holder[:,4],
+     '99p': holder[:,5]} 
+
+dfp = pd.DataFrame( data = d )
+
+# os.chdir('/home/pando004/Desktop/BankData/FRY9')
+os.chdir('/home/ryan0463/Documents/Research/BankBusinessLines')
+
+with open( os.path.join(os.getcwd(), "business_line.tex"), "w"
+  )  as file:
+        file.write( dfp[[ 'Objects','N','Mean','10p','Median','90p','99p']].to_latex(
+            float_format="%.1f",
+            header= ['Objects','N','Mean','10p','Median','90p','99p'],
+            index=False,
+            caption="This is caption",
+            label="tab:forecast_table",
+            column_format = "ccccccc") )
+
+
+
+
+with open( os.path.join(os.getcwd(), "forecast.tex"), "w"
+  )  as file:
+        file.write( df[[ 'State','15 Yr P','30 Yr P','45 Yr P',
+                                 '15 Yr F','30 Yr F','45 Yr F',
+                                 '15 Yr T','30 Yr T','45 Yr T',
+                                 '15 Yr V','30 Yr V','45 Yr V']].to_latex(
+            float_format="%.1f",
+            header= ['State','15y','30y','45y','15y','30y','45y','15y','30y','45y','15y','30y','45y'],
+            index=False,
+            caption="This is caption",
+            label="tab:forecast_table",
+            column_format = "ccccccccccccc") )
+
+
+
+
+#~~~~~~~~~~~~~~~~~~#
+#                  # 
+#   Export Data    #
+#                  #     
+#~~~~~~~~~~~~~~~~~~#
 
 # export dataframe
 df[['Bank_ID','Bank_Name','date','Assets','Net_Income','Expense',
-    'traditional_revenue','deposit_revenue','insurance_revenue','investment_revenue','treasury_revenue']].to_csv('revenue_data.csv')
-
-
-
-
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-#                                              # 
-#   Compute Business Line Quantities/Stocks    #
-#                                              # 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
-
-#
-#
-#   Create firm-level measures of business line revenues    
-#
-#
-#   (1) Traditional Banking
-#       (a) Loans and leases (5369 + B528 + B529)
-#
-#   (2) Deposits
-#       (a) deposits (6631 + 6636 + BHFN 6631 + BHFN 6636)
-#       (b) fed funds and repo (BHDM B993 + B995)
-#       (c) Other borrowed money (3190)
-#
-#   (3) Insurance Banking*
-#       (a) Property and casualty underwriting assets (C244)
-#       (b) Life and health underwriting assets (C248)
-#
-#   (4) Investment Banking*
-#       (a) Underwriting volume (RISK M408 from FR Y-15)
-#
-#   (5) Trading/Treasury
-#       (a) cash (0081 + 0395 + 0397)
-#       (b) securities (JJ34 + 1773 + JA22)
-#       (c) fed funds and reverse repo (BHDM B987 + B989)
-#       (d) trading assets (3545)
-
-
-
-
-# merge FR Y-15 data with FR Y-9C data
-#os.chdir('/home/pando004/Desktop/BankData/FRY15')
-#df15 = pd.read_csv('fr15data.csv')
-df15 = pd.read_csv('Data/fr15data.csv')
-
-df15['date'] = df15['date'].apply(lambda x: pd.to_datetime(str(x), format='%Y%m%d'))
-df15 = df15.sort_values(by=['date'])
-
-# drop 2015 Q4 observations
-df15 = df15[ ~(df15['date'] <= df15.date.unique()[0] ) ]
-
-# collect number of unique IDs in FRY15 data, see how many match with FRY9
-fry15_ids = df15.id.unique()
-fr9_ids = set( df.RSSD9001.unique() )
-it = 0
-for at,idx in enumerate(df15.id.unique()):
-    if idx in fr9_ids:
-        it = it + 1
-print(100*it/len(fry15_ids),'% of FRY15 banks in FRY9 dataset')
-print()
-print(100*(1-it/len(df.RSSD9001.unique())),'% of FRY9 banks not included in FRY15 reports')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    'traditional_revenue','deposit_revenue','insurance_revenue','investment_revenue','treasury_revenue',
+    'traditional_q','deposits_q','insurance_q','investment_q','treasury_q',
+    'traditional_p','deposits_p','insurance_p','investment_p','treasury_p']].to_csv('filtered_data.csv')
 
 
 
