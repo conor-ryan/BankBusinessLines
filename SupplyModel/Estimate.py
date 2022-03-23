@@ -2,11 +2,11 @@ import numpy as np
 import GMM as gmm
 
 def newton_raphson(df,p0,W,X_dep=None,X_cons=None,X_comm=None,X_ins=None,X_inv=None,Z_dep = None,Z_cons=None,Z_comm=None,Z_ins=None,Z_inv=None,ftol=1e-8):
-    # p_idx = list(range(0,5))
-    # p_idx.extend(range(9,len(p0)))
-    # capped_params_idx = list(range(0,5))
-    p_idx = list(range(len(p0)))
-    capped_params_idx = list(range(0,9))
+    p_idx = list(range(0,5))
+    p_idx.extend(range(9,len(p0)))
+    capped_params_idx = list(range(0,5))
+    # p_idx = list(range(len(p0)))
+    # capped_params_idx = list(range(0,9))
     print(p0[capped_params_idx])
     # print(capped_params_idx)
     ### Print Format
@@ -37,8 +37,10 @@ def newton_raphson(df,p0,W,X_dep=None,X_cons=None,X_comm=None,X_ins=None,X_inv=N
         # This should effectively stop the affected parameters from changing sign
         check_cap = [(abs(step[x])/param_vec[x])<0.5 or abs(step[x])<0.25 for x in capped_params_idx]
         if False in check_cap:
+            # print(step[capped_params_idx])
             cap = max(abs(step[capped_params_idx])/param_vec[capped_params_idx])
             step = step/cap*0.5
+            # print(step[capped_params_idx])
             print('Hit step cap of 50% parameter value on non_linear_parameters')
 
 

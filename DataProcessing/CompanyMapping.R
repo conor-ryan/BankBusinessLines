@@ -116,5 +116,5 @@ qtr_map = qtr_map[!OFFSPRING==3923614&quarter<20131101]
 qtr_map= qtr_map[!(PARENT==2348470&quarter>20180813)]
 
 save(qtr_map,file="Data/MarketStructure/OrgStructureByQuarter.rData")
-
+write.csv(qtr_map,file="Data/MarketStructure/OrgStructureByQuarter.csv",row.names=FALSE)
 

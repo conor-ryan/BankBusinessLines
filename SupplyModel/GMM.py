@@ -189,6 +189,11 @@ def calc_cost_moments_withderivatives(df,par):
 
     moments = (total_cost- df['total_cost']).to_numpy()
 
+    print("Total Market Costs:", sum(df['total_cost'])/1e6)
+    print("Total Predicted Costs:", sum(total_cost)/1e6)
+
+
+
 
 
     return moments,grad,hess

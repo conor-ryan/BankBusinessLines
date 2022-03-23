@@ -5,13 +5,13 @@ library(stargazer)
 setwd("G:/Shared drives/BankBusinessLines")
 
 #### Read in Data ####
-data = as.data.table(read.csv("Data/frdata_refined.csv"))
+data = as.data.table(read.csv("Data/frdata_refined_stock.csv"))
 data[,date:=as.Date(date)]
 data[,year:=as.numeric(format(date,"%Y"))]
 data[,X:=NULL]
 
 
-ibanks = as.data.table(read.csv("Data/investment_refined.csv"))
+ibanks = as.data.table(read.csv("Data/investment_refined_stock.csv"))
 ibanks[,date:=as.Date(date)]
 ibanks = ibanks[date!="2021-03-31"]
 ibanks[,X:=NULL]
@@ -58,7 +58,7 @@ firms = c()
 for (var in c("deposit_market_share","consumer_market_share","commercial_market_share","insurance_market_share","investment_market_share")){
   data[,share:=.SD,.SDcol=var]
   data[,temp_rank:=rank(-share,ties.method="average"),by="date"]
-  firms_prod = data[share>0&temp_rank<=20,unique(RSSD9001)]
+  firms_prod = data[share>0&temp_rank<=30,unique(RSSD9001)]
   firms = c(firms,firms_prod)
   data[,temp_rank:=NULL]
   data[,share:=NULL]
@@ -172,8 +172,10 @@ data[,p_inv:=investment_price]
 data[,p_ins:=insurance_price]
 
 data[,q_dep:=total_deposits]
-data[,q_cons:=new_consumer_loans]
-data[,q_comm:=new_commercial_loans]
+# data[,q_cons:=new_consumer_loans]
+# data[,q_comm:=new_commercial_loans]
+data[,q_cons:=consumer_loans]
+data[,q_comm:=commercial_loans]
 data[,q_inv:=investment_quantity]
 data[,q_ins:=insurance_assets]
 
@@ -186,6 +188,12 @@ data[,s_ins:=insurance_market_share]
 data[,L_comm:=commercial_loans]
 data[,L_cons:=consumer_loans]
 
+
+#### Exploration of Identification Issues
+# data[,total_cost:=0.2*total_cost]
+
+
+#### GMM Sample ####
 covariates = c("bankFactor","dateFactor","branch_count","geo_coverage","salary_per_asset","premises_per_asset")
 instruments = c("FEDFUNDS")
 gmm_sample = data[date>"2016-06-01",.SD,.SDcols = c("date","RSSD9001","total_cost",names(data)[grepl("^(r|p|q|s|L)_",names(data))],covariates,instruments)]
@@ -240,7 +248,9 @@ C = cor(Z)
 diag(C) = 0.0
 which(C>0.99,arr.ind=TRUE)
 
-Z = Z[,-which(colnames(Z)%in%c("bankFactor1032473:FEDFUNDS","bankFactor2648693:FEDFUNDS","dateFactor2020-09-30"))] # Drop fixed effects for single period banks
+Z = Z[,-which(colnames(Z)%in%c("bankFactor1032473:FEDFUNDS","bankFactor2648693:FEDFUNDS",
+                               "bankFactor1070804:FEDFUNDS","bankFactor5005998:FEDFUNDS",
+                               "dateFactor2020-09-30"))] # Drop fixed effects for single period banks
 test = solve(t(Z)%*%Z)
 
 ## Check regression equation
@@ -276,4 +286,6 @@ write.csv(gmm_sample,file="Data/GMMSample.csv",row.names=FALSE)
 write.csv(X_wo_r,file="Data/ExogenousDemandCovariates.csv",row.names=FALSE)
 write.csv(Z,file="Data/DemandInstruments.csv",row.names=FALSE)
 
-gmm_sample[,revenue:=r_cons*L_cons + r_comm*L_comm + p_inv*q_inv + p_ins*q_ins]
+gmm_sample[,revenue:=r_cons*L_cons + r_comm*L_comm + p_inv*q_inv + p_ins*q_ins-r_dep*q_dep]
+gmm_sample[,margin:=(revenue-total_cost)/total_cost]
+gmm_sample[,plot(q_dep,margin)]

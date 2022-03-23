@@ -42,19 +42,22 @@ Szz = np.matmul(np.transpose(Z),Z)
 W[0:IV_moment_length,0:IV_moment_length] = np.linalg.inv(Szz)
 print(W)
 
-parameter_vector = np.array([3.166537e+01,-800.,-600.,-80.,-120.,0.5,0.6,0.7,0.8])
+parameter_vector = np.array([3.166537e+01,-100.,-100.,-100.,-100.,0.9,0.9,0.9,0.9])
 parameter_vector = np.concatenate((parameter_vector,np.zeros(X.shape[1])),axis=0)
 
 p = Parameter(parameter_vector,X_dep= X,Z_dep = Z)
 
-df = simulate(df,parameter_vector,X_dep = X,Z_dep = Z)
+# df = simulate(df,parameter_vector,X_dep = X,Z_dep = Z)
 
 #
 deviations = np.concatenate(([10.,100.,100.,100.,100.,0.0,0.0,0.0,0.0],np.zeros(X.shape[1])),axis=0)
 
-p0 = parameter_vector + np.random.rand(len(parameter_vector))*deviations - deviations
-# p0 = parameter_vector.copy()
+# p0 = parameter_vector + np.random.rand(len(parameter_vector))*deviations - deviations
+p0 = parameter_vector.copy()
 p_est = newton_raphson(df,p0,W,X_dep = X,Z_dep=Z)
+
+df = predict(df,p_est,X,Z)
+df.to_csv('EstimationPrediction.csv')
 
 
 # print("Gradient Test")
@@ -111,8 +114,7 @@ p_est = newton_raphson(df,p0,W,X_dep = X,Z_dep=Z)
 
 
 ## Add Predicted Cost to the
-# df = predict(df,p_est,X,Z)
-# df.to_csv('EstimationPrediction.csv')
+
 # #
 # p_idx = [0]
 # p_idx.extend(list(range(9,(9+X.shape[1]))))
