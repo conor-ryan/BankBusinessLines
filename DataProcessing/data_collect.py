@@ -20,12 +20,7 @@ os.chdir('/home/ryan0463/Documents/Research/BankBusinessLines')
 Line Items
 """
 #RIAD tags
-rssd = ['9999','9002','9158','9010','9017'] # filing date, top holding id
-
-text = [
-        # non-interest revenue item names
-        '8562','8563','8564'
-        ]
+rssd = ['9999','9002'] # filing date, top holding id
 
 bhck = [
                             ###  SCHEDULE HI   ###
@@ -76,13 +71,7 @@ bhck = [
         'B988','C244','C248',
 
         # securities underwriting, broker-dealer balances
-        '3817', 'C252','8765','A127','8726',
-        
-        # non-interest revenues 
-        '8562','8563','8564',
-        
-        # filing date
-        '9999'
+        '3817', 'C252','8765','A127','8726'
         ]
 
 bhcb = [
@@ -133,7 +122,6 @@ BHFN_items = []
 BHDM_items = []
 BHCA_items = []
 BHCW_items = []
-TEXT_items = []
 
 for i in range(len(rssd)):
     RSSD_items.append( 'RSSD'+str(rssd[i]) )
@@ -162,16 +150,12 @@ for i in range(len(bhca)):
 for i in range(len(bhcw)):
     BHCK_items.append( 'BHCW'+str(bhcw[i]) )
 
-for i in range(len(text)):
-    TEXT_items.append( 'TEXT'+str(text[i]) )
-
 # one long list
 ItemList = np.concatenate(( RSSD_items,BHCK_items,BHCB_items,BHOD_items,BHCT_items,
-                            BHFN_items,BHDM_items,BHCA_items,BHCW_items,TEXT_items ))
+                            BHFN_items,BHDM_items,BHCA_items,BHCW_items ))
 
 #set directory
 #FRY9_location = os.getcwd() + '/Data/FRY9/'
-#FRY9_location = '/home/pando004/Desktop/BankData/FRY9/'
 FRY9_location = 'Data/FRY9/'
 directory = os.fsencode(FRY9_location)
 
@@ -238,5 +222,4 @@ GenDF[ BHDM_items ] = GenDF[ BHDM_items ].apply( pd.to_numeric )
 GenDF[ BHCA_items ] = GenDF[ BHCA_items ].apply( pd.to_numeric )
 GenDF[ BHCW_items ] = GenDF[ BHCW_items ].apply( pd.to_numeric )
 
-#GenDF.to_csv('frdata.csv')
 GenDF.to_csv('Data/frdata.csv')

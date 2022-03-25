@@ -52,72 +52,74 @@ df['total_assets'] = df['BHCK2170']
 ##  (iv) insurance assets for each period.  There will be overlap but it's important to get the largest
 ##  firms for each product line in each period.
 
-# initialize list of bank indices and threshold number N
-top_idx = []
-topN = 5
-
-# for each quarter
-for at,t in enumerate(df.date.unique()):
-
-    # determine top N consumer lenders
-    con_idx = list( (df[df.date == t]['BHDM1797'] + df[df.date == t]['BHDM5367'] + df[df.date == t]['BHDM5368']).nlargest(topN).index )
-
-    # determine top N commercial lenders
-    com_idx = list( (df[df.date == t]['BHCKF158'] + df[df.date == t]['BHCKF159'] + df[df.date == t]['BHDM1420'] +
-                      df[df.date == t]['BHDM1975'] + df[df.date == t]['BHDM1460'] + df[df.date == t]['BHCKF160'] +
-                      df[df.date == t]['BHCKF161'] + df[df.date == t]['BHCK1292'] + df[df.date == t]['BHCK1296'] +
-                      df[df.date == t]['BHCK1590'] + df[df.date == t]['BHDM1766'] + df[df.date == t]['BHDMJ454'] +
-                      df[df.date == t]['BHDM1545'] + df[df.date == t]['BHDM2165'] + df[df.date == t]['BHDMKX57']
-                      ).nlargest(topN).index )
-
-    # determine top N deposit takers
-    dep_idx = list( (df[df.date == t]['BHDM6631'] + df[df.date == t]['BHDM6636'] ).nlargest(topN).index )
-
-    # determine top N insurance providers
-    ins_idx = list( (df[df.date == t]['BHCKC244'] + df[df.date == t]['BHCKC248'] ).nlargest(topN).index )
-
-    # recover bank id's
-    con_list = []
-    com_list = []
-    dep_list = []
-    ins_list = []
-
-    for i in range(topN):
-        try:
-            con_list.append( df[df.index == con_idx[i] ]['RSSD9001'].unique()[0] )
-        except:
-            pass
-
-        try:
-            com_list.append( df[df.index == com_idx[i] ]['RSSD9001'].unique()[0] )
-        except:
-            pass
-
-        try:
-            dep_list.append( df[df.index == dep_idx[i] ]['RSSD9001'].unique()[0] )
-        except:
-            pass
-
-        try:
-            ins_list.append( df[df.index == ins_idx[i] ]['RSSD9001'].unique()[0] )
-        except:
-            pass
-
-    # append list with unique union set
-    top_idx = list( set(con_list).union( set(com_list),set(dep_list),set(ins_list), set(top_idx) ) )
-
-print('Collected a total of', len(top_idx),' bank IDs')
-
-#create subset dataframe using bank id's
-for i in range(len(top_idx)):
-
-    if i ==0:
-        temp_df = df[df.RSSD9001 == top_idx[i]]
-    else:
-        temp_df = temp_df.append( df[df.RSSD9001 == top_idx[i]] )
-
-df = temp_df.copy()
-
+# =============================================================================
+# # initialize list of bank indices and threshold number N
+# top_idx = []
+# topN = 5
+#
+# # for each quarter
+# for at,t in enumerate(df.date.unique()):
+#
+#     # determine top N consumer lenders
+#     con_idx = list( (df[df.date == t]['BHDM1797'] + df[df.date == t]['BHDM5367'] + df[df.date == t]['BHDM5368']).nlargest(topN).index )
+#
+#     # determine top N commercial lenders
+#     com_idx = list( (df[df.date == t]['BHCKF158'] + df[df.date == t]['BHCKF159'] + df[df.date == t]['BHDM1420'] +
+#                       df[df.date == t]['BHDM1975'] + df[df.date == t]['BHDM1460'] + df[df.date == t]['BHCKF160'] +
+#                       df[df.date == t]['BHCKF161'] + df[df.date == t]['BHCK1292'] + df[df.date == t]['BHCK1296'] +
+#                       df[df.date == t]['BHCK1590'] + df[df.date == t]['BHDM1766'] + df[df.date == t]['BHDMJ454'] +
+#                       df[df.date == t]['BHDM1545'] + df[df.date == t]['BHDM2165'] + df[df.date == t]['BHDMKX57']
+#                       ).nlargest(topN).index )
+#
+#     # determine top N deposit takers
+#     dep_idx = list( (df[df.date == t]['BHDM6631'] + df[df.date == t]['BHDM6636'] ).nlargest(topN).index )
+#
+#     # determine top N insurance providers
+#     ins_idx = list( (df[df.date == t]['BHCKC244'] + df[df.date == t]['BHCKC248'] ).nlargest(topN).index )
+#
+#     # recover bank id's
+#     con_list = []
+#     com_list = []
+#     dep_list = []
+#     ins_list = []
+#
+#     for i in range(topN):
+#         try:
+#             con_list.append( df[df.index == con_idx[i] ]['RSSD9001'].unique()[0] )
+#         except:
+#             pass
+#
+#         try:
+#             com_list.append( df[df.index == com_idx[i] ]['RSSD9001'].unique()[0] )
+#         except:
+#             pass
+#
+#         try:
+#             dep_list.append( df[df.index == dep_idx[i] ]['RSSD9001'].unique()[0] )
+#         except:
+#             pass
+#
+#         try:
+#             ins_list.append( df[df.index == ins_idx[i] ]['RSSD9001'].unique()[0] )
+#         except:
+#             pass
+#
+#     # append list with unique union set
+#     top_idx = list( set(con_list).union( set(com_list),set(dep_list),set(ins_list), set(top_idx) ) )
+#
+# print('Collected a total of', len(top_idx),' bank IDs')
+#
+# #create subset dataframe using bank id's
+# for i in range(len(top_idx)):
+#
+#     if i ==0:
+#         temp_df = df[df.RSSD9001 == top_idx[i]]
+#     else:
+#         temp_df = temp_df.append( df[df.RSSD9001 == top_idx[i]] )
+#
+# df = temp_df.copy()
+#
+# =============================================================================
 #---------------------#
 #                     #
 #   Consumer Loans    #
