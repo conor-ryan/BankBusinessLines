@@ -10,8 +10,8 @@ plt.style.use('seaborn')
 
 #Import dataframe
 #os.chdir('/home/pando004/Desktop/BankData/FRY15')
-# os.chdir('G:/Shared drives/BankBusinessLines/Data/FRY15')
-os.chdir('/home/ryan0463/Documents/Research/BankBusinessLines')
+os.chdir('G:/Shared drives/BankBusinessLines')
+# os.chdir('/home/ryan0463/Documents/Research/BankBusinessLines')
 
 # import one file for now
 FRY15_location = os.getcwd() + '/Data/FRY15/'
