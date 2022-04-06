@@ -21,6 +21,7 @@ def implied_marginal_cost(
                             r_dep,r_cons,r_comm,p_inv,p_ins,
                             s_dep,s_cons,s_comm,s_inv,s_ins,
                             par):
+    mc_assets = (r_return - r_dep)*(1-1/par.alpha_dep)
     mc_cons = r_cons - (1-par.e)*r_dep + ( 1/(par.alpha_cons*(1-s_cons)) - (1-par.e)/(par.alpha_dep*(1-s_dep)) )
     mc_comm = r_comm - (1-par.e)*r_dep + ( 1/(par.alpha_comm*(1-s_comm)) - (1-par.e)/(par.alpha_dep*(1-s_dep)) )
     mc_inv  = p_inv + 1/(par.alpha_inv*(1-s_inv))
