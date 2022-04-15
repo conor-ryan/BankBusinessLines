@@ -18,14 +18,16 @@ os.chdir('G:/Shared drives/BankBusinessLines')
 df = pd.read_csv('Data/estimation_data.csv')
 data = df.to_numpy()
 
-parameter_vector = np.array([4,4,4,4,4])
+parameter_vector = np.array([4,4,4,4,4,1e5])
 p = Parameter(parameter_vector,df)
-
 #Weighting Matrix
-W = np.identity(data.shape[0])/1e10
+W = np.identity(data.shape[0])/1e3
 
 newton_raphson(data,p,W)
 
-print('Deposits, Property, Life, Annuity, Investments')
-print('Elasticities ',p.param_vec)
-print('Markups ',1/(1-1/p.param_vec)-1)
+print('Deposits,Annuity, Investments')
+elasticity_indices = np.concatenate(([p.par_dep_index],p.par_prod_index))
+print('Fixed Cost ',p.param_vec[p.par_fc_index])
+print('Elasticities ',p.param_vec[elasticity_indices])
+print('Markups ',1/(1-1/p.param_vec[elasticity_indices])-1)
+print('Regression Coefficients: ',(1-1/p.param_vec[elasticity_indices]))

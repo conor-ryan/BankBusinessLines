@@ -11,17 +11,6 @@ data[,year:=as.numeric(format(date,"%Y"))]
 data[,X:=NULL]
 
 
-ibanks = as.data.table(read.csv("Data/investment_refined_stock.csv"))
-ibanks[,date:=as.Date(date)]
-ibanks = ibanks[date!="2021-03-31"]
-ibanks[,X:=NULL]
-
-
-data = merge(data,ibanks,by.x=c("date","RSSD9001"),by.y=c("date","id"),all=TRUE)
-data[,total_assets:=total_assets.x]
-data[,c("total_assets.y","total_assets.x"):=NULL]
-
-
 ## Bank Characteristics 
 
 data[,salary_per_asset:=salaries/total_assets]

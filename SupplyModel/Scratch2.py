@@ -19,17 +19,17 @@ os.chdir('G:/Shared drives/BankBusinessLines')
 df = pd.read_csv('Data/estimation_data.csv')
 data = df.to_numpy()
 
-parameter_vector = np.array([4,4,4,4,4])
+parameter_vector = np.array([2.409,2.233,61.14,2.31e5])
 p = Parameter(parameter_vector,df)
 
 cost_moment_length = data.shape[0]
-W = np.identity(cost_moment_length)/1e10
+W = np.identity(cost_moment_length)
 
 print(predicted_expenses(data,p))
 
 
 mom = pred_exp_moments(data,p)
-
+print('MSE ',sum(mom**2))
 
 
 mom1, d_exp = gradient_pred_exp(data,p)
@@ -58,6 +58,3 @@ print('Gradient Test',grad_test)
 hess_test = numerical_hessian(data,p,W)
 print('Hessian', hess)
 print('Hessian Test',hess_test)
-
-
-newton_raphson(data,p,W)
