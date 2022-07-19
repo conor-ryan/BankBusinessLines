@@ -11,7 +11,7 @@ class Parameter:
     par_fc_index = 5
 
     def __init__(self,vec,df,
-                cost_spec_ind,cost_spec_dep,cost_spec_iv,
+                cost_spec_ind,cost_spec_dep,cost_spec_iv
                 dem_spec_ind_list,dem_spec_dep_list,dem_spec_iv_list):
 
 

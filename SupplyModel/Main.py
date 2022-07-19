@@ -4,8 +4,7 @@ import os
 import matplotlib.pyplot as plt
 
 ## Custom Code
-from Parameters import *
-from CostModel import *
+from Cost_Prediction_Functions import *
 from GMM import *
 from Estimate import *
 
