@@ -8,6 +8,7 @@ import pandas as pd
 class Parameter:
     par_dep_index = 0
     par_prod_index = [1,2,3,4]
+    # par_cost_index = [5,6,7,8,9]
 
     def __init__(self,vec,df,):
         self.data_asset_p_index = [i for i, val in enumerate(df.columns) if val=='return_on_assets'][0]
@@ -19,6 +20,9 @@ class Parameter:
 
         self.data_prod_p_index = [i for i, val in enumerate(df.columns) if val in ['prop_underwriting_p','life_underwriting_p','annuity_p','investment_p']]
         self.data_prod_q_index = [i for i, val in enumerate(df.columns) if val in ['prop_underwriting_q','life_underwriting_q','annuity_q','investment_q']]
+
+        # self.data_cost_indvar = [i for i, val in enumerate(df.columns) if val in ['deposit_adj_rev','prop_underwriting_rev','life_underwriting_rev','annuity_rev','investment_rev']]
+        # self.data_cost_depvar = [i for i, val in enumerate(df.columns) if val=='TotalCost_Less_AssetReturn'][0]
         self.param_vec = vec
 
     def update(self,step):
@@ -37,6 +41,10 @@ def predicted_expenses(data,par):
             mc_prod = (data[i,par.data_prod_p_index[j]])*(1-1/par.param_vec[par.par_prod_index[j]])
             pred_expenses[i] += mc_prod*data[i,par.data_prod_q_index[j]]
     return pred_expenses
+
+# def predicted_expenses(data,par):
+#     prediction = np.matmul(par.X_dep,par.beta_dep)
+#     return pred_expenses
 
 def pred_exp_moments(data,par):
     moments = predicted_expenses(data,par) - data[:,par.expenses_target]

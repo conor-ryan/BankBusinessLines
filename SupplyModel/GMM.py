@@ -1,5 +1,5 @@
 # import ProfitFunctions as pf
-import Cost_Prediction_Functions as cp
+import CostModel as cp
 import numpy as np
 import pandas as pd
 
