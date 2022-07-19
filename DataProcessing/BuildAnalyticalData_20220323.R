@@ -6,8 +6,6 @@ setwd("G:/Shared drives/BankBusinessLines")
 
 #### Read in Data ####
 data = as.data.table(read.csv("Data/filtered_data.csv"))
-
-
 vars= names(data)
 ## Switch NA to 0
 for (v in vars){
@@ -25,24 +23,7 @@ data[,return_on_assets:=revenue_on_assets/(traditional_q+treasury_q)]
 
 
 data[,total_revenue_captured:=product_revenue+revenue_on_assets+deposit_revenue]
-data[,Expense_adj:=total_revenue_captured*Expense/(Net_Income+Expense)]
-
-
-data[,ret_mean:=mean(return_on_assets),by="Bank_ID"]
-data[,asset_rev_adj:=(traditional_q+treasury_q)*(return_on_assets+deposits_p)]
-data[,dep_var:=Expense-revenue_on_assets]
-data[,asset_exp_adj:=(traditional_q+treasury_q)*(deposits_p)]
-
-reg = data[,lm(Expense~asset_exp_adj+prop_underwriting_revenue+life_underwriting_revenue +annuity_revenue+investment_revenue + as.factor(Bank_ID) + as.factor(date)) ]
-summary(reg)
-
-
-reg=data[,lm(dep_var~asset_exp_adj +annuity_revenue+investment_revenue) ]
-summary(reg)
-
-data[,pred_expenses:=predict(reg)]
-
-data[,cost_pred:=(return_on_assets-deposits_p)*(1-1/4)*Assets_adj]# + annuity_p*(1-1/4)*annuity_q+investment_p*(1-1/4)*investment_q]
+data[,Expense_adj:=total_revenue_captured-Net_Income]
 
 
 

@@ -2,9 +2,9 @@ import numpy as np
 import GMM as gmm
 
 def newton_raphson(data,par,W,ftol=1e-3):
-    p_idx = list(range(len(par.param_vec)))
+    p_idx = list(range(0,5))
     # p_idx.extend(range(9,len(p0)))
-    capped_params_idx = list(range(len(par.param_vec)))
+    capped_params_idx = list(range(0,5))
     # p_idx = list(range(len(p0)))
     # capped_params_idx = list(range(0,9))
     # print(p0[capped_params_idx])
@@ -54,22 +54,22 @@ def newton_raphson(data,par,W,ftol=1e-3):
         print('Now trying parameter vector', par.param_vec)
         new_fval = gmm.compute_gmm(data,par,W)
 
-        # alpha = abs(1/np.diag(H))
-        # while new_fval>fval*(1+1e-5):
-        #     step = -G*alpha
-        #     cap = max(abs(step[capped_params_idx])/param_cur[capped_params_idx])
-        #     if cap>0.5:
-        #         step = step/cap*0.5
-        #         print('Hit step cap of 50% parameter value on non_linear_parameters')
-        #
-        #     # print("New value","{:.3g}".format(new_fval),"exceeds old value","{:.3g}".format(fval),"by too much")
-        #     # print("Step along the gradient:",step)
-        #     print("Gradient step")
-        #     param_new[p_idx] = param_cur[p_idx] + step
-        #     par.set(param_new)
-        #     print('Now trying parameter vector', par.param_vec)
-        #     new_fval = gmm.compute_gmm(data,par,W)
-        #     alpha = alpha/10
+        alpha = abs(1/np.diag(H))
+        while new_fval>fval*(1+1e-5):
+            step = -G*alpha
+            cap = max(abs(step[capped_params_idx])/param_cur[capped_params_idx])
+            if cap>0.5:
+                step = step/cap*0.5
+                print('Hit step cap of 50% parameter value on non_linear_parameters')
+
+            # print("New value","{:.3g}".format(new_fval),"exceeds old value","{:.3g}".format(fval),"by too much")
+            # print("Step along the gradient:",step)
+            print("Gradient step")
+            param_new[p_idx] = param_cur[p_idx] + step
+            par.set(param_new)
+            print('Now trying parameter vector', par.param_vec)
+            new_fval = gmm.compute_gmm(data,par,W)
+            alpha = alpha/10
 
         # Final Parameter Update
         par.set(param_cur)
