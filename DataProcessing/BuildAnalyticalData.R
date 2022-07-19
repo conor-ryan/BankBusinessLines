@@ -5,7 +5,7 @@ library(stargazer)
 setwd("G:/Shared drives/BankBusinessLines")
 
 #### Read in Data ####
-data = as.data.table(read.csv("Data/frdata_refined_stock.csv"))
+data = as.data.table(read.csv("Data/filtered_data.csv"))
 data[,date:=as.Date(date)]
 data[,year:=as.numeric(format(date,"%Y"))]
 data[,X:=NULL]
