@@ -46,15 +46,8 @@ data[,cost_pred:=(return_on_assets-deposits_p)*(1-1/4)*Assets_adj]# + annuity_p*
 
 
 
-data[,t:=as.numeric(date)]
-data[,t2:=t^2]
-data[,summary(lm(return_on_assets~as.factor(Bank_ID)+t+t2))]
-data[,summary(lm(return_on_assets~as.factor(date)))]
-
 
 data[,test:=total_revenue_captured/(Net_Income+Expense)]
-
-
 data[,summary(test)]
 data[,hist(test)]
 

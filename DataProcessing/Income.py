@@ -806,22 +806,6 @@ df['annuity_p']   = df['annuity_revenue']  /df['annuity_q']
 df['investment_p']  = df['investment_revenue'] /df['investment_q']
 df['treasury_p']    = df['treasury_revenue']  /df['treasury_q']
 
-# Revenues are 0 if NA
-df.loc[pd.isna(df['traditional_revenue']),'traditional_revenue' ] = 0
-df.loc[pd.isna(df['deposit_revenue']),'deposit_revenue']= 0
-df.loc[pd.isna(df['prop_underwriting_revenue']),'prop_underwriting_revenue']= 0
-df.loc[pd.isna(df['life_underwriting_revenue']),'life_underwriting_revenue']= 0
-df.loc[pd.isna(df['annuity_revenue']),'annuity_revenue']= 0
-df.loc[pd.isna(df['investment_revenue']),'investment_revenue']= 0
-df.loc[pd.isna(df['treasury_revenue']),'treasury_revenue']= 0
-# Quantities are 0 if NA
-df.loc[pd.isna(df['traditional_q']),'traditional_q' ] = 0
-df.loc[pd.isna(df['deposits_q']),'deposits_q']= 0
-df.loc[pd.isna(df['prop_underwriting_q']),'prop_underwriting_q']= 0
-df.loc[pd.isna(df['life_underwriting_q']),'life_underwriting_q']= 0
-df.loc[pd.isna(df['annuity_q']),'annuity_q']= 0
-df.loc[pd.isna(df['investment_q']),'investment_q']= 0
-df.loc[pd.isna(df['treasury_q']),'treasury_q']= 0
 # Prices are zero if quantity is 0
 df.loc[df.traditional_q == 0,'traditional_p' ] = 0
 df.loc[df.deposits_q == 0 ,'deposits_p']= 0
@@ -830,7 +814,6 @@ df.loc[df.life_underwriting_q == 0 ,'life_underwriting_p']= 0
 df.loc[df.annuity_q == 0 ,'annuity_p']= 0
 df.loc[df.investment_q == 0 ,'investment_p']= 0
 df.loc[df.treasury_q == 0 ,'treasury_p']= 0
-
 
 
 
@@ -857,18 +840,6 @@ for idx, bank in enumerate( df.Bank_ID.unique() ):
     df.loc[df.Bank_ID == bank,'NI_computed'] = computed_ni
     df.loc[df.Bank_ID == bank,'NI_Residual'] = computed_ni - df[df.Bank_ID == bank]['Net_Income']
 
-#### Compute Return on Assets
-df['all_product_revenue'] = df['prop_underwriting_revenue'] + df['life_underwriting_revenue'] + \
-                            df['annuity_revenue'] + df['investment_revenue']
-df['revenue_on_assets'] = df['traditional_revenue'] + df['treasury_revenue'] + df['lease_nonint_revenue']
-df['Assets_adj'] = df['traditional_q'] + df['treasury_q']
-df['return_on_assets'] = df['revenue_on_assets']/df['Assets_adj']
-
-### Adjust Expenses
-df['inv_gross_margin'] = df['Expense']/(df['Net_Income']+df['Expense'])
-df['Expense_adj'] = df['inv_gross_margin']*(df['revenue_on_assets']+df['all_product_revenue']+df['deposit_revenue'])
-
-
 #~~~~~~~~~~~~~~~~~~#
 #                  #
 #   Export Data    #
@@ -881,15 +852,10 @@ df[['Bank_ID','Bank_Name','date','Assets','Net_Income','Expense',
     'traditional_q','deposits_q','prop_underwriting_q','life_underwriting_q','annuity_q','investment_q','treasury_q',
     'traditional_p','deposits_p','prop_underwriting_p','life_underwriting_p','annuity_p','investment_p','treasury_p','NI_computed','NI_Residual']].to_csv('Data/filtered_data.csv')
 
-
-df[['Assets_adj','Expense_adj','return_on_assets',
-    'traditional_q','deposits_q','prop_underwriting_q','life_underwriting_q','annuity_q','investment_q','treasury_q',
-    'traditional_p','deposits_p','prop_underwriting_p','life_underwriting_p','annuity_p','investment_p','treasury_p']].to_csv('Data/estimation_data.csv',index=False)
-
 print("Data Export Complete")
 
 
-#### This stuff is all broken now.
+#### This stuff is all broken now. 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #                                #
