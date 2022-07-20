@@ -1,6 +1,76 @@
 import statsmodels
 import numpy as np
 
+### General Prediction Error
+def lm_residual(data,par,spec):
+    Y = data[:,spec['dep_var']]
+    X = data[:,spec['ind_var']]
+    beta = par.param_vec[spec['param']]
+    residuals =  np.matmul(X,beta) - Y
+    return residuals
+
+def demandIV(data,par):
+    K = len(par.dem_spec_list)
+    N = par.rownum
+    # dem_residual_matrix = zeros(N,K)
+    mom = np.empty(shape=(0,))
+    for k in range(K):
+        spec = par.dem_spec_list[k]
+        res = lm_residual(data,par,spec)
+        Z = data[:,spec['inst_var']]
+        mom = np.append(mom,np.matmul(res,Z))
+        # dem_residual_matrix[:,k] = res
+    return mom
+
+def demand_residuals(data,par):
+    K = len(par.dem_spec_list)
+    N = par.rownum
+    dem_residual_matrix = np.zeros(N,K)
+    for k in range(K):
+        spec = par.dem_spec_list[k]
+        res = lm_residual(data,par,spec)
+        dem_residual_matrix[:,k] = res
+    return dem_residual_matrix
+
+def demandIV_moment_derivatives(data,par):
+        K = length(par.dem_spec_list)
+        N = par.rownum
+        IVmoments = demandIV(data,par)
+        grad = np.empty(shape = (0,par.parnum,))
+        hess = np.zeros(len(IV_moments),par.parnum,par.parnum)
+        for k in range(K):
+            spec = par.dem_spec_list[k]
+            grad_residual = np.zeros((par.rownum,par.parnum))
+            grad_residual[:,spec['param']] = data[:,spec['ind_var']]
+            Z = data[:,spec['inst_var']]
+            grad = np.concatenate((grad,np.matmul(Z,grad_residual)),axis=0)
+        return IVmoments, grad, hess
+
+def cost_moments(data,par):
+    res_mat = np.transpose(demand_residuals(data,par))
+    cost_res = lm_residual(data,par,par.cost_spec)
+    moments = np.matmul(res_mat,cost_res)
+    return moments
+
+def cost_moments_derivatives(data,par):
+    res_mat = np.transpose(demand_residuals(data,par))
+    cost_res = lm_residual(data,par,par.cost_spec)
+    moments = np.matmul(res_mat,cost_res)
+
+    grad = np.zeros(len(moments),par.parnum)
+    hess = np.zeros(len(IV_moments),par.parnum,par.parnum)
+    K = length(par.dem_spec_list)
+
+    for k in range(K):
+        spec = par.dem_spec_list[k]
+        grad[k,spec['param']] = np.matmul(np.transpose(cost_res),data[:,spec['ind_var']])
+        grad[k,par.cost_spec['param']] = np.matmul(np.transpose(data[:,par.cost_spec['ind_var']]),np.transpose(res_mat[k,:]))
+        hess[k,spec['param'],par.cost_spec['param']] =np.matmul(np.transpose(data[:,par.cost_spec['ind_var']]),data[:,spec['ind_var']])
+        hess[k,par.cost_spec['param'],spec['param']] =np.matmul(np.transpose(data[:,spec['ind_var']]),data[:,par.cost_spec['ind_var']])
+    return moments
+    
+
+
 # Derive the non-price product quality from structural demand equation
 # log(s_ij) - log(s_i0) = alpha*p + beta*X + epsilon
 def product_deltas(s,s_0,r,alpha):

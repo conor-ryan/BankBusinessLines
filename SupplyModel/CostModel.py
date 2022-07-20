@@ -6,24 +6,51 @@ import pandas as pd
 
 #### Class Variable: the object we are going to estimate
 class Parameter:
-    par_dep_index = 0
-    par_prod_index = [1,2,3,4]
+    # par_dep_index = 0
+    # par_prod_index = [1,2,3,4]
     # par_cost_index = [5,6,7,8,9]
 
-    def __init__(self,vec,df,):
-        self.data_asset_p_index = [i for i, val in enumerate(df.columns) if val=='return_on_assets'][0]
-        self.data_asset_q_index = [i for i, val in enumerate(df.columns) if val=='Assets_adj'][0]
-        self.expenses_target = [i for i, val in enumerate(df.columns) if val=='Expense_adj'][0]
+    def __init__(self,df,dem_spec_list,cost_spec):
+        K = length(dem_spec_list)
+        self.dem_spec_list = list()
+        p_len_tot = 0
+        for k in range(K):
+            spec_dict = dict()
+            spec_dict['dep_var'] = [i for i, val in enumerate(df.columns) if val==dem_spec_list[k]['dep_var'] ][0]
+            spec_dict['ind_var'] = [i for i, val in enumerate(df.columns) if val in dem_spec_list[k]['ind_var'] ]
 
-        self.data_dep_p_index = [i for i, val in enumerate(df.columns) if val=='deposits_p'][0]
-        self.data_dep_q_index = [i for i, val in enumerate(df.columns) if val=='deposits_q'][0]
+            spec_dict['inst_var'] = [i for i, val in enumerate(df.columns) if val in dem_spec_list[k]['inst_var'] ]
 
-        self.data_prod_p_index = [i for i, val in enumerate(df.columns) if val in ['prop_underwriting_p','life_underwriting_p','annuity_p','investment_p']]
-        self.data_prod_q_index = [i for i, val in enumerate(df.columns) if val in ['prop_underwriting_q','life_underwriting_q','annuity_q','investment_q']]
+            p_len_new = len(spec_dict['ind_var'])
+            spec_dict['param'] = np.linspace(p_len_tot,p_len_tot+p_len_new)
+            p_len_tot = p_len_tot + p_len_new
+            self.dem_spec_list.append(spec_dict)
+
+        self.cost_spec = dict()
+        self.cost_spec['dep_var'] = [i for i, val in enumerate(df.columns) if val==cost_spec[k]['dep_var'] ][0]
+        self.cost_spec['ind_var'] = [i for i, val in enumerate(df.columns) if val in cost_spec[k]['ind_var'] ]
+
+        p_len_new = len(spec_dict['ind_var'])
+        self.cost_spec['param'] = np.linspace(p_len_tot,p_len_tot+p_len_new)
+        p_len_tot = p_len_tot + p_len_new
+
+        #
+        #
+        # self.data_asset_p_index = [i for i, val in enumerate(df.columns) if val=='return_on_assets'][0]
+        # self.data_asset_q_index = [i for i, val in enumerate(df.columns) if val=='Assets_adj'][0]
+        # self.expenses_target = [i for i, val in enumerate(df.columns) if val=='Expense_adj'][0]
+        #
+        # self.data_dep_p_index = [i for i, val in enumerate(df.columns) if val=='deposits_p'][0]
+        # self.data_dep_q_index = [i for i, val in enumerate(df.columns) if val=='deposits_q'][0]
+        #
+        # self.data_prod_p_index = [i for i, val in enumerate(df.columns) if val in ['prop_underwriting_p','life_underwriting_p','annuity_p','investment_p']]
+        # self.data_prod_q_index = [i for i, val in enumerate(df.columns) if val in ['prop_underwriting_q','life_underwriting_q','annuity_q','investment_q']]
 
         # self.data_cost_indvar = [i for i, val in enumerate(df.columns) if val in ['deposit_adj_rev','prop_underwriting_rev','life_underwriting_rev','annuity_rev','investment_rev']]
         # self.data_cost_depvar = [i for i, val in enumerate(df.columns) if val=='TotalCost_Less_AssetReturn'][0]
+        vec = np.zeros(p_len_tot)
         self.param_vec = vec
+        self.rownum = size(df,2)
 
     def update(self,step):
         self.param_vec = self.param_vec + step
