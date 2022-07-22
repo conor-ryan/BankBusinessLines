@@ -29,6 +29,17 @@ def newton_raphson(data,par,W,ftol=1e-3,valtol=1e-4,itr_max=2000):
             deviation = np.random.rand(len(par.param_vec))*0.01 - 0.005
             par.update(deviation)
             print("Random Deviation Step")
+            # Evaluation for next iteration
+            fval, G, H = gmm.compute_gmm_hessian(data,par,W)
+
+            ## New derivatives
+            G = G[p_idx]
+            H = H[np.ix_(p_idx,p_idx)]
+            grad_size = np.sqrt(np.dot(G,G))
+            # Print Status Report
+            print('Function value is',"{:.8g}".format(fval),'and gradient size is',"{:.3g}".format(grad_size),'on iteration number',itr)
+
+
             continue
 
         ## Current Parameter Vector
