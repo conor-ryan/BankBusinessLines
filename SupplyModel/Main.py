@@ -161,7 +161,9 @@ dem_spec_list = [{'dep_var': 'log_q_deposit',
                                'dateFactor2020-06-30' , 'dateFactor2020-09-30'],# , 'dateFactor2020-12-31'],
                       'flag_var': 'flag_inv'}   ]
 
-cost_spec = {'dep_var':'cost_dep_var','ind_var':['rev_deposit_tilde' , 'rev_propundwrt' , 'rev_lifeundwrt' , 'rev_annuity' , 'rev_inv']}
+cost_spec = {'dep_var':'cost_dep_var',
+            'ind_var_endo':['rev_deposit_tilde' , 'rev_propundwrt' , 'rev_lifeundwrt' , 'rev_annuity' , 'rev_inv'],
+            'ind_var_exo': ['constant']}
 
 
 
@@ -182,7 +184,7 @@ p.check_full_rank(data)
 # Only possible because it is specified as exactly identified
 # Need some more general code here...
 W = np.identity(p.parnum)
-
+print(W.shape)
 ### Estimate Model
 newton_raphson(data,p,W,1e-6)
 

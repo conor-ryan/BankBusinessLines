@@ -1,7 +1,7 @@
 import numpy as np
 import GMM as gmm
 
-def newton_raphson(data,par,W,ftol=1e-3):
+def newton_raphson(data,par,W,ftol=1e-3,valtol=1e-4,itr_max=2000):
     p0 = par.param_vec
     p_idx = list(range(len(p0))) #In case we want to fix some parameters, currently estimating all
 
@@ -23,7 +23,14 @@ def newton_raphson(data,par,W,ftol=1e-3):
 
     itr=0
 
-    while grad_size>ftol:
+    while (grad_size>ftol) & (fval>valtol) & (itr<itr_max):
+        itr+=1
+        if itr%200==0:
+            deviation = np.random.rand(len(par.param_vec))*0.01 - 0.005
+            par.update(deviation)
+            print("Random Deviation Step")
+            continue
+
         ## Current Parameter Vector
         param_cur = par.param_vec.copy()
         ## Candidate New Parameter Vector (Updated)
@@ -34,29 +41,46 @@ def newton_raphson(data,par,W,ftol=1e-3):
         else:
             step = -G/H
 
-        # Cap step change at half of parameters estimate.
-        # This should effectively stop the affected parameters from changing sign
-        # check_cap = [(abs(step[x])/param_cur[x])<0.5 or abs(step[x])<0.25 for x in capped_params_idx]
+        # Cap step size
+        # cap_size = 10000
+        # check_cap = [abs(step[x])<cap_size for x in p_idx]
         # if False in check_cap:
+        #     cap = max(abs(step[p_idx]))
+        #     step = step/cap*cap_size
         #     # print(step[capped_params_idx])
-        #     cap = max(abs(step[capped_params_idx])/param_cur[capped_params_idx])
-        #     step = step/cap*0.5
-        #     # print(step[capped_params_idx])
-        #     print('Hit step cap of 50% parameter value on non_linear_parameters')
+        #     print('Hit step cap of ', cap_size)
 
 
         ## Candidate Update Vector
         param_new[p_idx] = param_cur[p_idx] + step
         par.set(param_new)
         # print('Now trying parameter vector', par.param_vec)
+        # print('Step is ', step)
 
         ## Evaluate Function at new parameter vector
         new_fval = gmm.compute_gmm(data,par,W)
 
         ## If the function is not minimizing, update the parameter with a gradient step
-        alpha = abs(1/np.diag(H))
-        while new_fval>fval:
+        ## Do this anyway if the gradient is really large
+
+        step_tol = 1.10
+        if grad_size>1e5:
+            print("Gradient Too Large")
+            new_fval = fval*100
+            alpha = abs(1/np.diag(H))
             step = -G*alpha
+
+            step_tol = 1.00
+
+        reduction_itr= 0
+        while (new_fval>fval*step_tol):
+            reduction_itr +=1
+            if reduction_itr==4:
+                step_tol = 1.00
+                alpha = abs(1/np.diag(H))
+                step = -G*alpha
+                print("Switch to Gradient")
+            step = step/10
             # cap = max(abs(step[capped_params_idx])/param_cur[capped_params_idx])
             # if cap>0.5:
             #     step = step/cap*0.5
@@ -64,17 +88,17 @@ def newton_raphson(data,par,W,ftol=1e-3):
 
             # print("New value","{:.3g}".format(new_fval),"exceeds old value","{:.3g}".format(fval),"by too much")
             # print("Step along the gradient:",step)
-            print("Gradient step")
+            print("Reduced step")
             ## Candidate Update Vector
             param_new[p_idx] = param_cur[p_idx] + step
             par.set(param_new)
             # print('Now trying parameter vector', par.param_vec)
-
+            # print('Step is ', step)
             ## Evaluate Function at new parameter vector
             new_fval = gmm.compute_gmm(data,par,W)
 
             ## If still not moving in right direction, smaller gradient step
-            alpha = alpha/10
+            #alpha = alpha/10
 
         # Final Parameter Update
         par.set(param_cur)
@@ -93,7 +117,6 @@ def newton_raphson(data,par,W,ftol=1e-3):
         G = G[p_idx]
         H = H[np.ix_(p_idx,p_idx)]
         grad_size = np.sqrt(np.dot(G,G))
-        itr+=1
         # Print Status Report
         print('Function value is',"{:.8g}".format(fval),'and gradient size is',"{:.3g}".format(grad_size),'on iteration number',itr)
 

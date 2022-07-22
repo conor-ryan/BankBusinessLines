@@ -125,43 +125,46 @@ dem_spec_list = [{'dep_var': 'log_q_deposit',
                              'dateFactor2018-06-30' , 'dateFactor2018-09-30' , 'dateFactor2018-12-31' , 'dateFactor2019-03-31' ,
                              'dateFactor2019-06-30' , 'dateFactor2019-09-30' , 'dateFactor2019-12-31' , 'dateFactor2020-03-31' ,
                              'dateFactor2020-06-30' , 'dateFactor2020-09-30'],# , 'dateFactor2020-12-31'],
-                      'flag_var': 'flag_annuity'},
-{'dep_var': 'log_q_inv',
-                  'ind_var': [ 'log_p_inv',
-                   'bankFactor1025608' , 'bankFactor1026632' , 'bankFactor1036967' , 'bankFactor1037003' ,
-                    'bankFactor1039502' , 'bankFactor1068025' , 'bankFactor1068191' , 'bankFactor1069778' ,
-                     'bankFactor1070345' , 'bankFactor1073757' , 'bankFactor1074156' , 'bankFactor1078529' ,
-                      'bankFactor1111435' , 'bankFactor1119794' , 'bankFactor1120754' , 'bankFactor1132449' ,
-                       'bankFactor1199611' , 'bankFactor1199844' , 'bankFactor1245415' , 'bankFactor1275216' ,
-                        'bankFactor1378434' , 'bankFactor1562859' , 'bankFactor1574834' , 'bankFactor1575569' ,
-                         'bankFactor1951350' , 'bankFactor2162966' , 'bankFactor2277860' , 'bankFactor2380443' ,
-                          'bankFactor2816906' , 'bankFactor3232316' , 'bankFactor3242838' , 'bankFactor3587146' ,
-                           'bankFactor3606542' , 'bankFactor3846375' , 'bankFactor3981856' , 'bankFactor4504654' ,
-                            'bankFactor4846998' , 'bankFactor5006575' , 'bankFactor5280254' ,
-                            'dateFactor2016-06-30' , 'dateFactor2016-09-30' , 'dateFactor2016-12-31' , 'dateFactor2017-03-31' ,
-                             'dateFactor2017-06-30' , 'dateFactor2017-09-30' , 'dateFactor2017-12-31' , 'dateFactor2018-03-31' ,
-                             'dateFactor2018-06-30' , 'dateFactor2018-09-30' , 'dateFactor2018-12-31' , 'dateFactor2019-03-31' ,
-                             'dateFactor2019-06-30' , 'dateFactor2019-09-30' , 'dateFactor2019-12-31' , 'dateFactor2020-03-31' ,
-                             'dateFactor2020-06-30' , 'dateFactor2020-09-30'],# , 'dateFactor2020-12-31'],
-                    'inst_var': [ 'log_p_inv',
-                     'bankFactor1025608' , 'bankFactor1026632' , 'bankFactor1036967' , 'bankFactor1037003' ,
-                      'bankFactor1039502' , 'bankFactor1068025' , 'bankFactor1068191' , 'bankFactor1069778' ,
-                       'bankFactor1070345' , 'bankFactor1073757' , 'bankFactor1074156' , 'bankFactor1078529' ,
-                        'bankFactor1111435' , 'bankFactor1119794' , 'bankFactor1120754' , 'bankFactor1132449' ,
-                         'bankFactor1199611' , 'bankFactor1199844' , 'bankFactor1245415' , 'bankFactor1275216' ,
-                          'bankFactor1378434' , 'bankFactor1562859' , 'bankFactor1574834' , 'bankFactor1575569' ,
-                           'bankFactor1951350' , 'bankFactor2162966' , 'bankFactor2277860' , 'bankFactor2380443' ,
-                            'bankFactor2816906' , 'bankFactor3232316' , 'bankFactor3242838' , 'bankFactor3587146' ,
-                             'bankFactor3606542' , 'bankFactor3846375' , 'bankFactor3981856' , 'bankFactor4504654' ,
-                              'bankFactor4846998' , 'bankFactor5006575' , 'bankFactor5280254' ,
-                              'dateFactor2016-06-30' , 'dateFactor2016-09-30' , 'dateFactor2016-12-31' , 'dateFactor2017-03-31' ,
-                               'dateFactor2017-06-30' , 'dateFactor2017-09-30' , 'dateFactor2017-12-31' , 'dateFactor2018-03-31' ,
-                               'dateFactor2018-06-30' , 'dateFactor2018-09-30' , 'dateFactor2018-12-31' , 'dateFactor2019-03-31' ,
-                               'dateFactor2019-06-30' , 'dateFactor2019-09-30' , 'dateFactor2019-12-31' , 'dateFactor2020-03-31' ,
-                               'dateFactor2020-06-30' , 'dateFactor2020-09-30'],# , 'dateFactor2020-12-31'],
-                      'flag_var': 'flag_inv'}   ]
+                      'flag_var': 'flag_annuity'}]#,
+# {'dep_var': 'log_q_inv',
+#                   'ind_var': [ 'log_p_inv',
+#                    'bankFactor1025608' , 'bankFactor1026632' , 'bankFactor1036967' , 'bankFactor1037003' ,
+#                     'bankFactor1039502' , 'bankFactor1068025' , 'bankFactor1068191' , 'bankFactor1069778' ,
+#                      'bankFactor1070345' , 'bankFactor1073757' , 'bankFactor1074156' , 'bankFactor1078529' ,
+#                       'bankFactor1111435' , 'bankFactor1119794' , 'bankFactor1120754' , 'bankFactor1132449' ,
+#                        'bankFactor1199611' , 'bankFactor1199844' , 'bankFactor1245415' , 'bankFactor1275216' ,
+#                         'bankFactor1378434' , 'bankFactor1562859' , 'bankFactor1574834' , 'bankFactor1575569' ,
+#                          'bankFactor1951350' , 'bankFactor2162966' , 'bankFactor2277860' , 'bankFactor2380443' ,
+#                           'bankFactor2816906' , 'bankFactor3232316' , 'bankFactor3242838' , 'bankFactor3587146' ,
+#                            'bankFactor3606542' , 'bankFactor3846375' , 'bankFactor3981856' , 'bankFactor4504654' ,
+#                             'bankFactor4846998' , 'bankFactor5006575' , 'bankFactor5280254' ,
+#                             'dateFactor2016-06-30' , 'dateFactor2016-09-30' , 'dateFactor2016-12-31' , 'dateFactor2017-03-31' ,
+#                              'dateFactor2017-06-30' , 'dateFactor2017-09-30' , 'dateFactor2017-12-31' , 'dateFactor2018-03-31' ,
+#                              'dateFactor2018-06-30' , 'dateFactor2018-09-30' , 'dateFactor2018-12-31' , 'dateFactor2019-03-31' ,
+#                              'dateFactor2019-06-30' , 'dateFactor2019-09-30' , 'dateFactor2019-12-31' , 'dateFactor2020-03-31' ,
+#                              'dateFactor2020-06-30' , 'dateFactor2020-09-30'],# , 'dateFactor2020-12-31'],
+#                     'inst_var': [ 'log_p_inv',
+#                      'bankFactor1025608' , 'bankFactor1026632' , 'bankFactor1036967' , 'bankFactor1037003' ,
+#                       'bankFactor1039502' , 'bankFactor1068025' , 'bankFactor1068191' , 'bankFactor1069778' ,
+#                        'bankFactor1070345' , 'bankFactor1073757' , 'bankFactor1074156' , 'bankFactor1078529' ,
+#                         'bankFactor1111435' , 'bankFactor1119794' , 'bankFactor1120754' , 'bankFactor1132449' ,
+#                          'bankFactor1199611' , 'bankFactor1199844' , 'bankFactor1245415' , 'bankFactor1275216' ,
+#                           'bankFactor1378434' , 'bankFactor1562859' , 'bankFactor1574834' , 'bankFactor1575569' ,
+#                            'bankFactor1951350' , 'bankFactor2162966' , 'bankFactor2277860' , 'bankFactor2380443' ,
+#                             'bankFactor2816906' , 'bankFactor3232316' , 'bankFactor3242838' , 'bankFactor3587146' ,
+#                              'bankFactor3606542' , 'bankFactor3846375' , 'bankFactor3981856' , 'bankFactor4504654' ,
+#                               'bankFactor4846998' , 'bankFactor5006575' , 'bankFactor5280254' ,
+#                               'dateFactor2016-06-30' , 'dateFactor2016-09-30' , 'dateFactor2016-12-31' , 'dateFactor2017-03-31' ,
+#                                'dateFactor2017-06-30' , 'dateFactor2017-09-30' , 'dateFactor2017-12-31' , 'dateFactor2018-03-31' ,
+#                                'dateFactor2018-06-30' , 'dateFactor2018-09-30' , 'dateFactor2018-12-31' , 'dateFactor2019-03-31' ,
+#                                'dateFactor2019-06-30' , 'dateFactor2019-09-30' , 'dateFactor2019-12-31' , 'dateFactor2020-03-31' ,
+#                                'dateFactor2020-06-30' , 'dateFactor2020-09-30'],# , 'dateFactor2020-12-31'],
+#                       'flag_var': 'flag_inv'}   ]
 
-cost_spec = {'dep_var':'cost_dep_var','ind_var':['rev_deposit_tilde' , 'rev_propundwrt' , 'rev_lifeundwrt' , 'rev_annuity' , 'rev_inv']}
+cost_spec = {'dep_var':'cost_dep_var',
+            'ind_var_endo':['rev_deposit_tilde' , 'rev_propundwrt' , 'rev_lifeundwrt' , 'rev_annuity'],# , 'rev_inv'],
+            'ind_var_exo': ['constant']}
+
 
 
 
@@ -175,14 +178,14 @@ data = df.to_numpy()
 p = Parameter(df,dem_spec_list,cost_spec)
 p.check_full_rank(data)
 
-print('IV Moments')
-# print(demandIV(data,p))
-m, g, h = demandIV_moment_derivatives(data,p)
-print(m.shape)
-print(g.shape)
-print(h.shape)
+# print('IV Moments')
+# # print(demandIV(data,p))
+# m, g, h = demandIV_moment_derivatives(data,p)
+# print(m.shape)
+# print(g.shape)
+# print(h.shape)
 # print('Cost Moments')
-# print(cost_moments(data,p))
+# # print(cost_moments(data,p))
 # m, g, h = cost_moments_derivatives(data,p)
 # print(m.shape)
 # print(g.shape)
@@ -190,27 +193,40 @@ print(h.shape)
 
 
 
-# Single Equation 2SLS W
-X = data[np.ix_(p.dem_spec_list[0]['index'],p.dem_spec_list[0]['ind_var'])]
-
-
-Z = data[np.ix_(p.dem_spec_list[0]['index'],p.dem_spec_list[0]['inst_var'])]
-W = np.linalg.inv(np.matmul(np.transpose(Z),Z))
-Y = data[p.dem_spec_list[0]['index'],p.dem_spec_list[0]['dep_var']]
-
-Szx = np.matmul(np.transpose(Z),X)
-Szy = np.matmul(np.transpose(Z),Y)
-
-est = np.matmul(np.linalg.inv(np.matmul(np.matmul(np.transpose(Szx),W),Szx)),np.matmul(np.matmul(np.transpose(Szx),W),Szy))
-print(est)
-print(len(est))
+# # Single Equation 2SLS W
+# X = data[np.ix_(p.dem_spec_list[0]['index'],p.dem_spec_list[0]['ind_var'])]
+#
+#
+# Z = data[np.ix_(p.dem_spec_list[0]['index'],p.dem_spec_list[0]['inst_var'])]
+# W = np.linalg.inv(np.matmul(np.transpose(Z),Z))
+# Y = data[p.dem_spec_list[0]['index'],p.dem_spec_list[0]['dep_var']]
+#
+# Szx = np.matmul(np.transpose(Z),X)
+# Szy = np.matmul(np.transpose(Z),Y)
+#
+# est = np.matmul(np.linalg.inv(np.matmul(np.matmul(np.transpose(Szx),W),Szx)),np.matmul(np.matmul(np.transpose(Szx),W),Szy))
+# print(est)
+# print(len(est))
 
 # Only possible because it is specified as exactly identified
 W = np.identity(p.parnum)
 
 
-# f = compute_gmm(data,p,W)
-# print('Evaluated at ',f)
+f,G,H = compute_gmm_hessian(data,p,W)
+print('Evaluated at ',f)
+grad_size = np.sqrt(np.dot(G,G))
+print('Gradient Size ', grad_size)
+
+deviation = np.random.rand(len(p.param_vec))*0.1 - 0.05
+p.update(deviation)
+f,G,H = compute_gmm_hessian(data,p,W)
+print('Evaluated at ',f)
+grad_size = np.sqrt(np.dot(G,G))
+print('Gradient Size ', grad_size)
+
+
+
+
 # G = compute_gmm_gradient(data,p,W)
 # print(G.shape)
 # f,G,H = compute_gmm_hessian(data,p,W)
@@ -221,8 +237,8 @@ W = np.identity(p.parnum)
 # print(test.shape)
 
 
-newton_raphson(data,p,W,1e-6)
-p.output(data,W)
+# newton_raphson(data,p,W,1e-6)
+# p.output(data,W)
 
 #
 # ## Exogenous Deposit Demand Covariates

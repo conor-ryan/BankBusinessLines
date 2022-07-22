@@ -93,8 +93,9 @@ data = merge(data,macro[,c("date_end","FEDFUNDS","VIX")],by.x="date",by.y="date_
 #### Some additional Variable Edits ####
 data[,bankFactor:=as.factor(Bank_ID)]
 data[,dateFactor:=as.factor(date)]
+data[,constant:=1]
 
-data = data[,.SD,.SDcols=names(data)[grepl("rev_|log_|flag_|cost_dep_var|FEDFUNDS|VIX|bankFactor|dateFactor",names(data))]]
+data = data[,.SD,.SDcols=names(data)[grepl("rev_|log_|flag_|cost_dep_var|FEDFUNDS|VIX|bankFactor|dateFactor|constant",names(data))]]
 
 
 f = as.formula(paste("~-1+",paste(names(data),collapse="+")))

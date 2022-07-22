@@ -8,6 +8,17 @@ def lm_residual(data,par,spec):
     beta = par.param_vec[spec['param']]
     residuals =  np.matmul(X,beta) - Y
     return residuals
+### Prediction from a model with distinct endogenous & exogenous parameters
+def lm_residual_endoexo(data,par,spec):
+    Y = data[spec['index'],spec['dep_var']]
+    X_1 = data[np.ix_(spec['index'],spec['ind_var_endo'])]
+    X_2 = data[np.ix_(spec['index'],spec['ind_var_exo'])]
+    beta_1 = par.param_vec[spec['param_endo']]
+    beta_2 = par.param_vec[spec['param_exo']]
+    residuals =  np.matmul(X_1,beta_1) + np.matmul(X_2,beta_2) - Y
+    return residuals
+
+
 
 ### Interact Residual with Insturments: IV Moments, or OLS if Z = X
 # Implement for each demand specification
@@ -65,30 +76,43 @@ def cost_moments(data,par):
     # Demand residuals
     res_mat = np.transpose(demand_residuals(data,par))
     # Cost residuals
-    cost_res = lm_residual(data,par,par.cost_spec)
+    cost_res = lm_residual_endoexo(data,par,par.cost_spec)
+
+    # Residual Interaction moments
     moments = np.matmul(res_mat,cost_res)
+    # Exogenous regressor moments
+    X_2 = data[np.ix_(par.cost_spec['index'],par.cost_spec['ind_var_exo'])]
+    moments = np.append(moments,np.matmul(cost_res,X_2))
     #Dimension is number of product demand specifications
     return moments
 
 ### Compute Cost Moment 1st and 2nd Derivatives
 def cost_moments_derivatives(data,par):
     res_mat = np.transpose(demand_residuals(data,par))
-    cost_res = lm_residual(data,par,par.cost_spec)
-    moments = np.matmul(res_mat,cost_res)
+    cost_res = lm_residual_endoexo(data,par,par.cost_spec)
+    moments = cost_moments(data,par)
 
     grad = np.zeros((len(moments),par.parnum))
     hess = np.zeros((len(moments),par.parnum,par.parnum))
     K = len(par.dem_spec_list)
+    cost_ind_vars = par.cost_spec['ind_var_endo']+par.cost_spec['ind_var_exo']
+    cost_ind_params =np.append(par.cost_spec['param_endo'],par.cost_spec['param_exo'])
+
+
     # For each demand specification
     for k in range(K):
         spec = par.dem_spec_list[k]
         X_beta = data[np.ix_(spec['index'],spec['ind_var'])]
-        X_gamma = data[np.ix_(spec['index'],par.cost_spec['ind_var'])]
-
+        X_gamma = data[np.ix_(spec['index'],cost_ind_vars)]
         grad[k,spec['param']] = np.matmul(np.transpose(cost_res[spec['index']]),X_beta)
-        grad[k,par.cost_spec['param']] = np.matmul(np.transpose(data[:,par.cost_spec['ind_var']]),np.transpose(res_mat[k,:]))
+        grad[k,cost_ind_params] = np.matmul(np.transpose(data[:,cost_ind_vars]),np.transpose(res_mat[k,:]))
 
         # Not positive if the indexing on the Hessian is correct, but seems to match numerical hessian
-        hess[np.ix_([k],par.cost_spec['param'],spec['param'])] = np.matmul(np.transpose(X_gamma),X_beta)
-        hess[np.ix_([k],spec['param'],par.cost_spec['param'])] =np.matmul(np.transpose(X_beta),X_gamma)
+        hess[np.ix_([k],cost_ind_params,spec['param'])] = np.matmul(np.transpose(X_gamma),X_beta)
+        hess[np.ix_([k],spec['param'],cost_ind_params)] =np.matmul(np.transpose(X_beta),X_gamma)
+
+    X_gamma = data[np.ix_(par.cost_spec['index'],cost_ind_vars)]
+    X_2 = data[np.ix_(par.cost_spec['index'],par.cost_spec['ind_var_exo'])]
+    grad[K:,cost_ind_params] = np.matmul(np.transpose(X_2),X_gamma)
+
     return moments, grad, hess
