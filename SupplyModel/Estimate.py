@@ -2,16 +2,12 @@ import numpy as np
 import GMM as gmm
 
 def newton_raphson(data,par,W,ftol=1e-3):
-    # p_idx = list(range(0,5))
-    # p_idx.extend(range(9,len(p0)))
-    # capped_params_idx = list(range(0,5))
     p0 = par.param_vec
-    p_idx = list(range(len(p0)))
-    # capped_params_idx = list(range(0,9))
-    # print(p0[capped_params_idx])
-    # print(capped_params_idx)
+    p_idx = list(range(len(p0))) #In case we want to fix some parameters, currently estimating all
+
     ### Print Format
     np.set_printoptions(precision=4)
+
     ### Initial Evaluation
     fval, G, H = gmm.compute_gmm_hessian(data,par,W)
 
@@ -22,6 +18,7 @@ def newton_raphson(data,par,W,ftol=1e-3):
     # print('Gradient value at starting parameter:',G)
     # print('hessian value at starting parameter:',H)
 
+    # Norm for convergence tolerance
     grad_size = np.sqrt(np.dot(G,G))
 
     itr=0
@@ -48,13 +45,15 @@ def newton_raphson(data,par,W,ftol=1e-3):
         #     print('Hit step cap of 50% parameter value on non_linear_parameters')
 
 
+        ## Candidate Update Vector
         param_new[p_idx] = param_cur[p_idx] + step
-        # print('Newton Raphson Step: ',step)
-        ## Make an attempt to be descending
         par.set(param_new)
         # print('Now trying parameter vector', par.param_vec)
+
+        ## Evaluate Function at new parameter vector
         new_fval = gmm.compute_gmm(data,par,W)
 
+        ## If the function is not minimizing, update the parameter with a gradient step
         alpha = abs(1/np.diag(H))
         while new_fval>fval:
             step = -G*alpha
@@ -66,10 +65,15 @@ def newton_raphson(data,par,W,ftol=1e-3):
             # print("New value","{:.3g}".format(new_fval),"exceeds old value","{:.3g}".format(fval),"by too much")
             # print("Step along the gradient:",step)
             print("Gradient step")
+            ## Candidate Update Vector
             param_new[p_idx] = param_cur[p_idx] + step
             par.set(param_new)
             # print('Now trying parameter vector', par.param_vec)
+
+            ## Evaluate Function at new parameter vector
             new_fval = gmm.compute_gmm(data,par,W)
+
+            ## If still not moving in right direction, smaller gradient step
             alpha = alpha/10
 
         # Final Parameter Update
@@ -85,7 +89,7 @@ def newton_raphson(data,par,W,ftol=1e-3):
             print('Parameters running off to infinity: ', check_unidentified)
         G[check_unidentified] = 0
 
-
+        ## New derivatives
         G = G[p_idx]
         H = H[np.ix_(p_idx,p_idx)]
         grad_size = np.sqrt(np.dot(G,G))

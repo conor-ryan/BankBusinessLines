@@ -1,27 +1,6 @@
-# import ProfitFunctions as pf
-import CostModel as cp
-import DemandIV as iv
+import LinearModel as iv
 import numpy as np
 import pandas as pd
-
-
-
-#
-# def simulate(df,parameters,X_dep=None,X_cons=None,X_comm=None,X_ins=None,X_inv=None,Z_dep = None,Z_cons=None,Z_comm=None,Z_ins=None,Z_inv=None):
-#     par = Parameter(parameters,X_dep=X_dep,X_cons=X_cons,X_comm=X_comm,X_ins=X_ins,X_inv=X_inv,Z_dep = Z_dep,Z_cons=Z_cons,Z_comm=Z_comm,Z_ins=Z_ins,Z_inv=Z_inv)
-#     # Marginal Cost Estimate
-#     mc_results = df.apply(lambda x: pf.implied_marginal_cost(x.r_dep,x.r_cons,x.r_comm,x.p_inv,x.p_ins,
-#                                                 x.s_dep,x.s_cons,x.s_comm,x.s_inv,x.s_ins,par),result_type="expand",axis=1)
-#     mc_results.columns = ["mc_cons", "mc_comm", "mc_inv", "mc_ins"]
-#
-#     # Total Cost Estimate
-#     df_cost = pd.concat([mc_results,df],axis="columns")
-#     total_cost = df_cost.apply(lambda x: pf.total_cost(x.L_cons,x.L_comm,x.r_dep,x.q_dep,
-#                                                 x.q_cons,x.q_comm,x.q_inv,x.q_ins,
-#                                                 x.mc_cons,x.mc_comm,x.mc_inv,x.mc_ins,par),result_type="expand",axis=1)
-#     df['total_cost'] = total_cost
-#     return df
-
 
 ### Compute GMM Objective based on a weighting matrix W
 def gmm_objective(moments,W):

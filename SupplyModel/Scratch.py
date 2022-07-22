@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 
 ## Custom Code
 from Parameters import *
-from CostModel import *
+# from CostModel import *
 from GMM import *
 from Estimate import *
-from DemandIV import *
+from LinearModel import *
 
 plt.style.use('seaborn')
 
