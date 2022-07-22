@@ -1,5 +1,6 @@
 # import ProfitFunctions as pf
 import CostModel as cp
+import DemandIV as iv
 import numpy as np
 import pandas as pd
 
@@ -45,15 +46,17 @@ def gmm_hessian(moments,grad,hess,W):
 ### Evaluate GMM Objective function based on data and parameter vector
 def compute_gmm(data,par,W):
     # Cost moments
-    moments_cost = cp.pred_exp_moments(data,par)
-    total_val = gmm_objective(moments_cost,W)
+    moments_cost = iv.cost_moments(data,par)
 
-    # # IV moments
-    # moments_iv = iv.IV_moments(df,p)
-    # moments = np.concatenate((moments_iv,moments_cost),axis=0)
+    # Demand moments
+    moments_iv = iv.demandIV(data,par)
+    moments = np.concatenate((moments_iv,moments_cost),axis=0)
+
+    # moments = iv.demandIV(data,par)
+    # moments = iv.cost_moments(data,par)
 
     ## Temporary Monitoring
-    # total_val = gmm_objective(moments,W)
+    total_val = gmm_objective(moments,W)
     # # IV Moment Component
     # idx = list(range(len(moments_iv)))
     # IV_comp = np.matmul(np.transpose(moments_iv),np.matmul(W[np.ix_(idx,idx)],moments_iv))
@@ -64,34 +67,46 @@ def compute_gmm(data,par,W):
 
 def compute_gmm_gradient(data,par,W):
 
-    moments_cost,grad_cost = cp.gradient_pred_exp(data,par)
-    # moments_iv = iv.IV_moments(df,p)
-    # grad_iv, hess_iv = iv.IV_mom_derivatives(df,p)
-    # moments = np.concatenate((moments_iv,moments_cost),axis=0)
-    # grad = np.concatenate((grad_iv,grad_cost),axis=0)
+    moments_cost,grad_cost,hess_cost = iv.demandIV_moment_derivatives(data,par)
+    moments_iv,grad_iv,hess_iv = iv.cost_moments_derivatives(data,par)
 
-    # moments = iv.deposit_IV_moments(df,p)
-    # grad, hess = iv.dep_IV_mom_derivatives(df,p)
+    moments = np.concatenate((moments_iv,moments_cost),axis=0)
+    grad = np.concatenate((grad_iv,grad_cost),axis=0)
+    # moments,grad,hess = iv.demandIV_moment_derivatives(data,par)
+    # moments,grad,hess = iv.cost_moments_derivatives(data,par)
 
-    grad = gmm_gradient(moments_cost,grad_cost,W)
-    return grad
+    G = gmm_gradient(moments,grad,W)
+    return G
 
 def compute_gmm_hessian(data,par,W):
-    moments_cost,grad_cost,hess_cost = cp.hessian_pred_exp(data,par)
-    # moments_iv = iv.IV_moments(df,p)
-    # grad_iv, hess_iv = iv.IV_mom_derivatives(df,p)
-    # #
-    # moments = np.concatenate((moments_iv,moments_cost),axis=0)
-    # grad = np.concatenate((grad_iv,grad_cost),axis=0)
-    # hess = np.concatenate((hess_iv,hess_cost),axis=0)
+    moments_cost,grad_cost,hess_cost = iv.demandIV_moment_derivatives(data,par)
+    moments_iv,grad_iv,hess_iv = iv.cost_moments_derivatives(data,par)
 
-    # moments = iv.deposit_IV_moments(df,p)
-    # grad, hess = iv.dep_IV_mom_derivatives(df,p)
+    moments = np.concatenate((moments_iv,moments_cost),axis=0)
+    grad = np.concatenate((grad_iv,grad_cost),axis=0)
+    hess = np.concatenate((hess_iv,hess_cost),axis=0)
+    # moments,grad,hess = iv.demandIV_moment_derivatives(data,par)
+    # moments,grad,hess = iv.cost_moments_derivatives(data,par)
 
-    f = gmm_objective(moments_cost,W)
-    G = gmm_gradient(moments_cost,grad_cost,W)
-    H = gmm_hessian(moments_cost,grad_cost,hess_cost,W)
+    f = gmm_objective(moments,W)
+    G = gmm_gradient(moments,grad,W)
+    H = gmm_hessian(moments,grad,hess,W)
     return f, G, H
+
+def gmm_avar(data,par,W):
+    moments,G,H = iv.demandIV_moment_derivatives(data,par)
+    moments = np.expand_dims(moments,axis=1)
+    print(moments.shape)
+    # f = gmm_objective(moments,W)
+    # G = gmm_gradient(moments,grad,W)
+    # H = gmm_hessian(moments,grad,hess,W)
+    S = np.matmul(moments,np.transpose(moments))
+    GWG = np.matmul(np.matmul(np.transpose(G),W),G)
+    GWSWG =np.matmul(np.matmul(np.matmul(np.transpose(G),W),S),np.matmul(W,G))
+
+    Avar = np.matmul(np.matmul(np.linalg.inv(GWG),GWSWG),np.linalg.inv(GWG))
+    return Avar
+
 
 ## Numerical Derivative test functions
 def numerical_gradient(data,par,W):
